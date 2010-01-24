@@ -7,18 +7,13 @@ run(S, F):-
 	compile_programs,
 	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
 	format(S, '~`=t~32|~n', []),
-	forall(program(P, N),
-	       run_program(P, N, F, S)).
+	forall(program(P, N, F),
+	       run_program(P, N, S)).
 
 compile_programs :-
 	style_check(-singleton),
 	forall(program(P, _),
 	       load_files(P:P, [silent(true), if(changed)])).
-
-
-run_program(P, N0, F, S) :-
-	N is integer(N0*F),
-	run_program(P, N, S).
 
 run_program(Program, N, S) :-
 	ntimes(Program, N, Time, GC), !,
@@ -73,6 +68,10 @@ tune_count(Program, Count) :-
 	T > 0.5, !,
 	Count is round(C * (1/T)).
 
+program(P, N, F) :-
+	program(P, N0),
+	N is max(1, round(N0*F)).
+
 %%	program(?Program, ?Times)
 %
 %	Times are tuned on Jan 24, 2010, using SWI-Prolog 5.9.7 on
@@ -99,3 +98,55 @@ program(tak,		 35).
 program(zebra,		 166).
 
 
+		 /*******************************
+		 *	    INTERLEAVED		*
+		 *******************************/
+
+run_interleaved(F) :-
+	compile_programs,
+	findall(N-P, program(P, N, F), Pairs),
+	phrase(seq_interleaved(Pairs), Sequence),
+	seq_clause(Sequence, Body),
+	retractall(rni),
+	assert((rni :- Body), Ref),
+	garbage_collect,
+	time(rni),
+	erase(Ref).
+
+seq_interleaved([]) --> !.
+seq_interleaved(Pairs) -->
+	seq_interleaved(Pairs, Rest),
+	seq_interleaved(Rest).
+
+seq_interleaved([], []) -->
+	[].
+seq_interleaved([1-P|T0], T) --> !,
+	[P],
+	seq_interleaved(T0, T).
+seq_interleaved([N-P|T0], [N1-P|T]) -->
+	[P],
+	{ N1 is N - 1 },
+	seq_interleaved(T0, T).
+
+seq_clause([], true).
+seq_clause([H|T], (\+ \+ H:top, G)) :-
+	seq_clause(T, G).
+
+run_non_interleaved(F) :-
+	compile_programs,
+	findall(N-P, program(P, N, F), Pairs),
+	phrase(seq_non_interleaved(Pairs), Sequence),
+	seq_clause(Sequence, Body),
+	assert((rni :- Body), Ref),
+	garbage_collect,
+	time(rni),
+	erase(Ref).
+
+seq_non_interleaved([]) -->
+	[].
+seq_non_interleaved([0-_|T]) --> !,
+	seq_non_interleaved(T).
+seq_non_interleaved([N-P|T]) -->
+	[P],
+	{ N1 is N - 1 },
+	seq_non_interleaved([N1-P|T]).
