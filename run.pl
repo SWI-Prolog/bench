@@ -10,10 +10,16 @@ run(S, F):-
 	forall(program(P, N, F),
 	       run_program(P, N, S)).
 
+:- (   file_search_path(bench, _)
+   ->  true
+   ;   prolog_load_context(directory, Dir),
+       assert(user:file_search_path(bench, Dir))
+   ).
+
 compile_programs :-
 	style_check(-singleton),
 	forall(program(P, _),
-	       load_files(P:P, [silent(true), if(changed)])).
+	       load_files(P:bench(P), [silent(true), if(changed)])).
 
 run_program(Program, N, S) :-
 	ntimes(Program, N, Time, GC), !,
