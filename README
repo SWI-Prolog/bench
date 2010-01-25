@@ -1,0 +1,16 @@
+These are the `van Roy' benchmarks  for   Prolog.  They  are designed to
+cover a large number of  aspects,   both  small-scale and large(r) scale
+programs.  All  benchmarks  are  pure  Prolog;    i.e.,   there  are  no
+constraints, etc. Another problem with this   data  is that the programs
+are rather old, generally not using  modern libraries and often avoiding
+GC because some old implementations did not provide it. Also many todays
+application manage a lot  of  text,  often   using  atoms.  None  of the
+benchmarks is concerned with that.
+
+Each test is a non-modular  program   that  provides  a single predicate
+top/0. The driver run.pl loads  all  programs   in  their  own module. I
+modified most of the driver. The toplevel  is run(+Factor). Each test is
+callibrated to be run approximately  the   same  time. Factor scales the
+number of iterations. Factor=1 is callibrated for 1 second per benchmark
+on an AMD 5400+ using SWI-Prolog 5.9.7 (Linux, gcc 4.4 -O2).
+
