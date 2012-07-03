@@ -25,15 +25,24 @@ run_program(Program, N, S) :-
 	ntimes(Program, N, Time, GC), !,
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
+:- if(statistics(gctime, _)).
+get_performance_stats(GC, T):-
+	statistics(gctime, GC),		% SWI-Prolog
+	statistics(cputime, T).
+:- else.
+get_performance_stats(GC, T):-
+	statistics(garbage_collection, [_,_,TGC]),
+	statistics(cputime, [TT,_]),
+	GC is TGC / 1000,
+	T is TT / 1000.
+:- endif.
+
 ntimes(M, N, T, GC):-
-	statistics(gctime, GC0),
-	statistics(cputime, T0),
+	get_performance_stats(GC0, T0),
 	ntimes(M, N),
-	statistics(cputime, T1),
-	statistics(gctime, GC1),
+	get_performance_stats(GC1, T1),
 	ntimes_dummy(N),
-	statistics(cputime, T2),
-	statistics(gctime, GC2),
+	get_performance_stats(GC2, T2),
 	T  is (T1-T0) - (T2-T1),
 	GC is (GC1-GC0) - (GC2-GC1).
 
