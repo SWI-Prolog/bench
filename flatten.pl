@@ -30,7 +30,7 @@ gather_disj([C|Cs],NewProc,Disj,Link) :-
 % the disjunctions are replaced by the corresponding vars
 % Link is the last (uninstantiated) cdr of the list Disj.
 % do the work of pretrans for nots, -> etc...
-% put all those guys inside disjunctions 
+% put all those guys inside disjunctions
 extract_disj(C, (Head:-NewBody), Disj, Link) :-
 	C = (Head:-Body), !,
 	CtrIn = 0,
@@ -40,7 +40,7 @@ extract_disj(Head, Head, Link, Link).
 extract_disj((C1,C2), (NewC1,NewC2), Disj, Link, C, CtrIn, CtrOut) :-
 	extract_disj(C1, NewC1, Disj, Link1, C, CtrIn, Ctr),
 	extract_disj(C2, NewC2, Link1, Link, C, Ctr, CtrOut).
-	
+
 extract_disj(Goal, X, Disj, Link, C, CtrIn, CtrOut) :-
 	is_disj(Goal,NewGoal), !,
 	Disj = [disj(NewGoal,CtrIn,X,C)|Link],
@@ -51,7 +51,7 @@ is_disj(((C1 -> C2); C3),((C1, !, C2); C3)) :- !.
 is_disj((C1;C2),(C1;C2)).
 is_disj(not(C),((C,!,fail);true)).
 is_disj(\+(C),((C,!,fail);true)).
-is_disj('\='(C1,C2),((C1 = C2,!,fail);true)).
+is_disj(\=(C1,C2),((C1 = C2,!,fail);true)).
 
 % given a list of disj((A;B),N,X,C), for each, do the following:
 % 1) find vars in (A;B)
@@ -71,7 +71,7 @@ treat_disj([disj((A;B),N,X,C)|Disjs], DummyClauses, Link) :-
 	make_dummy_clauses((A;B),X,DummyClauses,Rest),
 	treat_disj(Disjs, Rest, Link).
 
-make_dummy_clauses((A;B),X,[NewC|Cs],Link) :- 
+make_dummy_clauses((A;B),X,[NewC|Cs],Link) :-
 	!,
 	copy((X:-A), NewC),
 	make_dummy_clauses(B,X,Cs,Link).
@@ -128,7 +128,7 @@ make_sym([], []).
 make_sym([V|L], [p(V,_)|S]) :- make_sym(L, S).
 
 % *** Gather all variables used in a term: (in a set or a bag)
-varset(Term, VarSet) :- varbag(Term, VB), 
+varset(Term, VarSet) :- varbag(Term, VB),
     sort(VB, VarSet).
 varbag(Term, VarBag) :- varbag(Term, VarBag, []).
 

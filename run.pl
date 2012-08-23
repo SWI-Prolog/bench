@@ -117,6 +117,8 @@ program(zebra,		 166).
 		 *	    INTERLEAVED		*
 		 *******************************/
 
+:- dynamic rni/0.
+
 run_interleaved(F) :-
 	compile_programs,
 	findall(N-P, program(P, N, F), Pairs),

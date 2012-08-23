@@ -61,7 +61,7 @@ t_reduce(_expr, _ans) :-
 %	write('.'),
 	t_redex(_form, _red),
 	!,
-	t_reduce(_next, _ans), 
+	t_reduce(_next, _ans),
 	!.
 
 t_append(_link, _link, _l, _l).
@@ -86,13 +86,13 @@ t_redex([_elsepart,_ifpart,_cond|cond], _ifpart) :-
 t_redex([_elsepart,_ifpart,_cond|cond], _elsepart).
 
 % Apply:
-t_redex([_f|apply], _fr) :- 
+t_redex([_f|apply], _fr) :-
 	t_reduce(_f, _fr).
 
 % List operations:
-t_redex([_arg|hd], _x) :- 
+t_redex([_arg|hd], _x) :-
 	t_reduce(_arg, [_y,_x|'.']).
-t_redex([_arg|tl], _y) :- 
+t_redex([_arg|tl], _y) :-
 	t_reduce(_arg, [_y,_x|'.']).
 
 % Arithmetic:
@@ -107,7 +107,7 @@ t_redex([_y,_x|_op], _res) :-
 % Tests:
 t_redex([_y,_x|_test], _res) :-
 	atom(_test),
-	member(_test, ['<', '>', '=<', '>=', '=\=', '=:=']),
+	member(_test, [<, >, =<, >=, =\=, =:=]),
 	t_reduce(_x, _xres),
 	t_reduce(_y, _yres),
 	number(_xres), number(_yres),
@@ -142,20 +142,20 @@ t_redex(_in, _out) :-
 
 % Basic arithmetic and relational operators:
 
-eval(  '+', C, A, B) :- C is A + B.
-eval(  '-', C, A, B) :- C is A - B.
-eval(  '*', C, A, B) :- C is A * B.
-eval( '//', C, A, B) :- C is A // B.
-eval('mod', C, A, B) :- C is A mod B.
+eval(  +, C, A, B) :- C is A + B.
+eval(  -, C, A, B) :- C is A - B.
+eval(  *, C, A, B) :- C is A * B.
+eval( //, C, A, B) :- C is A // B.
+eval(mod, C, A, B) :- C is A mod B.
 
-eval1('-', C, A) :- C is -A.
+eval1(-, C, A) :- C is -A.
 
-relop(  '<', A, B) :- A<B.
-relop(  '>', A, B) :- A>B.
-relop( '=<', A, B) :- A=<B.
-relop( '>=', A, B) :- A>=B.
-relop('=\=', A, B) :- A=\=B.
-relop('=:=', A, B) :- A=:=B.
+relop(  <, A, B) :- A<B.
+relop(  >, A, B) :- A>B.
+relop( =<, A, B) :- A=<B.
+relop( >=, A, B) :- A>=B.
+relop(=\=, A, B) :- A=\=B.
+relop(=:=, A, B) :- A=:=B.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -234,7 +234,7 @@ t_rule1(_x, _e, _ve, _se, _f, _vf, _sf, [_resf,_e|b]) :-
 	notinv(_x, _ve), inv(_x, _vf), _x\==_f, !,
 	t_trans(_x, _f, _sf, _resf).
 t_rule1(_x, _e, _ve, _se, _f, _vf, _sf, [_f,_rese|c]) :-
-	/* inv(_x, _ve), */ 
+	/* inv(_x, _ve), */
 	notinv(_x, _vf), !,
 	t_trans(_x, _e, _se, _rese).
 t_rule1(_x, _e, _ve, _se, _f, _vf, _sf, [_resf,_rese|s]) :-
@@ -269,7 +269,7 @@ t_rule2(_x, _e, _f, _vf, _sf, _g, _vg, _sg, [_resg,_f,_e|bp]) :-
 make_list(_a, _a) :- atomic(_a).
 make_list([_b,_a|'.'], [_a|_rb]) :- make_list(_b, _rb).
 
-listify(_X, _X) :- 
+listify(_X, _X) :-
 	(var(_X); atomic(_X)), !.
 listify(_Expr, [_Op|_LArgs]) :-
 	functor(_Expr, _Op, N),
@@ -322,42 +322,42 @@ diffv_2([], A, S1, [A|S1]).
 diffv_2([B|S2], A, S1, S) :-
         compare(Order, A, B),
         diffv_3(Order, A, S1, B, S2, S).
- 
+
 diffv_3(<, A, S1, B, S2, [A|S]) :- diffv(S1, [B|S2], S).
 diffv_3(=, A, S1, _, S2,     S) :- diffv(S1, S2, S).
 diffv_3(>, A, S1, _, S2,     S) :- diffv_2(S2, A, S1, S).
- 
+
 % *** Union
 unionv([], S2, S2).
 unionv([A|S1], S2, S) :- unionv_2(S2, A, S1, S).
- 
+
 unionv_2([], A, S1, [A|S1]).
 unionv_2([B|S2], A, S1, S) :-
         compare(Order, A, B),
         unionv_3(Order, A, S1, B, S2, S).
- 
+
 unionv_3(<, A, S1, B, S2, [A|S]) :- unionv_2(S1, B, S2, S).
 unionv_3(=, A, S1, _, S2, [A|S]) :- unionv(S1, S2, S).
 unionv_3(>, A, S1, B, S2, [B|S]) :- unionv_2(S2, A, S1, S).
- 
+
 % *** Subset
 subsetv([], _).
 subsetv([A|S1], [B|S2]) :-
         compare(Order, A, B),
         subsetv_2(Order, A, S1, S2).
- 
+
 subsetv_2(=, _, S1, S2) :- subsetv(S1, S2).
 subsetv_2(>, A, S1, S2) :- subsetv([A|S1], S2).
- 
+
 % For unordered lists S1:
 small_subsetv([], _).
 small_subsetv([A|S1], S2) :- inv(A, S2), small_subsetv(S1, S2).
- 
+
 % *** Membership
 inv(A, [B|S]) :-
         compare(Order, A, B),
         inv_2(Order, A, S).
- 
+
 inv_2(=, _, _).
 inv_2(>, A, S) :- inv(A, S).
 
@@ -368,7 +368,7 @@ notinv_2([], _).
 notinv_2([B|S], A) :-
         compare(Order, A, B),
         notinv_3(Order, A, S).
- 
+
 notinv_3(<, _, _).
 notinv_3(>, A, S) :- notinv_2(S, A).
 
