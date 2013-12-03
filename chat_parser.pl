@@ -1,5 +1,5 @@
 % generated: 19 November 1989
-% option(s): 
+% option(s):
 %
 %  chat_parser
 %
@@ -14,7 +14,7 @@ go:-
     statistics(runtime,[_,T]),
     write('execution time is '),write(T), write(milliseconds).
 
-chat_parser :- 
+chat_parser :-
     my_string(X),
     determinate_say(X,_),
     fail.
@@ -27,7 +27,7 @@ my_string([what,rivers,are,there,?]).
 my_string([does,afghanistan,border,china,?]).
 my_string([what,is,the,capital,of,upper_volta,?]).
 my_string([where,is,the,largest,country,?]).
-my_string([which,country,'`',s,capital,is,london,?]).
+my_string([which,country,'~',s,capital,is,london,?]).
 my_string([which,countries,are,european,?]).
 my_string([how,large,is,the,smallest,american,country,?]).
 my_string([what,is,the,ocean,that,borders,african,countries,
@@ -46,7 +46,7 @@ my_string([what,are,the,countries,from,which,a,river,flows,
 
 %  determinate_say
 
-determinate_say(X,Y) :- 
+determinate_say(X,Y) :-
    say(X,Y), !.
 
 
@@ -174,7 +174,7 @@ topic(B,C,D,x(gap,nonterminal,pp(E,compl,F,G),H)) :-
 
 
 opt_comma(B,C,D,E) :-
-   `(',',B,C,D,E).
+   ~(',',B,C,D,E).
 opt_comma(B,B,C,C).
 
 
@@ -202,7 +202,7 @@ np(np(B,C,D),B,E,F,G,H,I,J,K,L,M) :-
 np(part(B,C),3+D,E,indef,F,G,H,I,J,K,L) :-
    is_pp(G),
    determiner(B,D,indef,I,M,K,N),
-   `(of,M,O,N,P),
+   ~(of,M,O,N,P),
    s_all(Q),
    prep_case(R),
    np(C,3+plu,R,def,F,Q,H,O,J,P,L).
@@ -223,7 +223,7 @@ variable_q(B,C,compl,D,E,F,G,x(gap,nonterminal,
    verb_case(D).
 variable_q(B,C,compl,D,E,F,G,
 	   x(gap,nonterminal,predicate(adj,value(H,wh(B)),I),J)) :-
-   `(how,E,K,G,L),
+   ~(how,E,K,G,L),
    adj(quant,H,K,F,L,J),
    empty(I),
    verb_case(D).
@@ -265,13 +265,13 @@ int_det(B,3+C,D,E,F,G) :-
 gen_marker(B,B,C,D) :-
    virtual(gen_marker,C,D).
 gen_marker(B,C,D,E) :-
-   `('`',B,F,D,G),
+   ~('~',B,F,D,G),
    an_s(F,C,G,E).
 
 
 whose(B,C,D,E,F,x(nogap,nonterminal,np_head0(wh(B),C,proper),
       x(nogap,nonterminal,gen_marker,G))) :-
-   `(whose,D,E,F,G).
+   ~(whose,D,E,F,G).
 
 
 question(B,C,D,E,F,G,H) :-
@@ -314,7 +314,7 @@ verb_form(B,C,D,E,F,G,H,I) :-
 neg(B,C,D,D,E,F) :-
    virtual(neg(B,C),E,F).
 neg(aux+B,neg,C,D,E,F) :-
-   `(not,C,D,E,F).
+   ~(not,C,D,E,F).
 neg(B,pos,C,C,D,D).
 
 
@@ -348,7 +348,7 @@ s(s(B,C,D,E),F,G,H,I,J) :-
 
 
 subj(there,B,C+be,D,E,F,G) :-
-   `(there,D,E,F,G).
+   ~(there,D,E,F,G).
 subj(B,C,D,E,F,G,H) :-
    s_all(I),
    subj_case(J),
@@ -394,7 +394,7 @@ gen_case(B,C,D,x(nogap,terminal,the,E)) :-
 
 
 an_s(B,C,D,E) :-
-   `(s,B,C,D,E).
+   ~(s,B,C,D,E).
 an_s(B,B,C,C).
 
 
@@ -412,18 +412,18 @@ quant_phrase(quant(B,C),D,E,F,G,H,I) :-
 quant(B,indef,C,D,E,F) :-
    neg_adv(G,B,C,H,E,I),
    comp_adv(G,H,J,I,K),
-   `(than,J,D,K,F).
+   ~(than,J,D,K,F).
 quant(B,indef,C,D,E,F) :-
-   `(at,C,G,E,H),
+   ~(at,C,G,E,H),
    sup_adv(I,G,D,H,F),
    sup_op(I,B).
 quant(the,def,B,C,D,E) :-
-   `(the,B,C,D,E).
+   ~(the,B,C,D,E).
 quant(same,indef,B,B,C,C).
 
 
 neg_adv(B,not+B,C,D,E,F) :-
-   `(not,C,D,E,F).
+   ~(not,C,D,E,F).
 neg_adv(B,B,C,C,D,D).
 
 
@@ -496,14 +496,14 @@ comp_phrase(comp(B,C,D),E,F,G,H,I) :-
 comp(B,C,D,E,F,G) :-
    comp_adv(B,D,H,F,I),
    adj(quant,C,H,J,I,K),
-   `(than,J,E,K,G).
+   ~(than,J,E,K,G).
 comp(more,B,C,D,E,F) :-
    rel_adj(B,C,G,E,H),
-   `(than,G,D,H,F).
+   ~(than,G,D,H,F).
 comp(same,B,C,D,E,F) :-
-   `(as,C,G,E,H),
+   ~(as,C,G,E,H),
    adj(quant,B,G,I,H,J),
-   `(as,I,D,J,F).
+   ~(as,I,D,J,F).
 
 
 relative(B,[C],D,E,F,G,H,I,J) :-
@@ -533,7 +533,7 @@ rel(B,rel(C,D),E,F,G,H,I) :-
 
 
 variable(B,C,D,E,F,x(gap,nonterminal,np(np(B,wh(C),[]),B,G,H,I,J,K),L)) :-
-   `(that,D,E,F,L),
+   ~(that,D,E,F,L),
    trace1(J,K).
 variable(B,C,D,E,F,x(gap,nonterminal,np(G,H,I,J,K,L,M),N)) :-
    wh(C,B,G,H,I,D,E,F,N),
@@ -767,15 +767,15 @@ sup_adj(adj(B),C,D,E,F) :-
 
 
 comp_adv(less,B,C,D,E) :-
-   `(less,B,C,D,E).
+   ~(less,B,C,D,E).
 comp_adv(more,B,C,D,E) :-
-   `(more,B,C,D,E).
+   ~(more,B,C,D,E).
 
 
 sup_adv(least,B,C,D,E) :-
-   `(least,B,C,D,E).
+   ~(least,B,C,D,E).
 sup_adv(most,B,C,D,E) :-
-   `(most,B,C,D,E).
+   ~(most,B,C,D,E).
 
 
 rel_pron(B,C,D,E,F) :-
@@ -790,8 +790,8 @@ name(B,C,D,E,F) :-
 
 
 int_art(B,plu,quant(same,wh(B)),C,D,E,F) :-
-   `(how,C,G,E,H),
-   `(many,G,D,H,F).
+   ~(how,C,G,E,H),
+   ~(many,G,D,H,F).
 int_art(B,C,D,E,F,G,H) :-
    terminal(I,E,F,G,H),
    int_art(I,B,C,D).
@@ -823,9 +823,9 @@ quantifier_pron(B,C,D,E,F,G) :-
 
 
 context_pron(prep(in),place,B,C,D,E) :-
-   `(where,B,C,D,E).
+   ~(where,B,C,D,E).
 context_pron(prep(at),time,B,C,D,E) :-
-   `(when,B,C,D,E).
+   ~(when,B,C,D,E).
 
 
 number(nb(B),C,D,E,F,G) :-
@@ -840,7 +840,7 @@ terminator(B,C,D,E,F) :-
 
 opt_the(B,B,C,C).
 opt_the(B,C,D,E) :-
-   `(the,B,C,D,E).
+   ~(the,B,C,D,E).
 
 
 conj(B,list,list,C,D,E,F) :-
@@ -855,9 +855,9 @@ loc_pred(B,C,D,E,F) :-
    loc_pred(G,B).
 
 
-`(B,C,D,E,F) :-
+~(B,C,D,E,F) :-
    terminal(B,C,D,E,F),
-   `(B).
+   ~(B).
 
 
 %----------------------------------------------------------------------------
@@ -866,7 +866,7 @@ loc_pred(B,C,D,E,F) :-
 %
 %----------------------------------------------------------------------------
 
-word(Word) :- `(Word).
+word(Word) :- ~(Word).
 word(Word) :- conj(Word).
 word(Word) :- adverb(Word).
 word(Word) :- sup_adj(Word,_).
@@ -887,26 +887,26 @@ word(Word) :- int_art(Word,_,_,_).
 word(Word) :- int_pron(Word,_).
 word(Word) :- loc_pred(Word,_).
 
-`(how).
-`(whose).
-`(there).
-`(of).
-`('`').		% use ` instead of ' to help assembler
-`(',').	
-`(s).
-`(than).
-`(at).
-`(the).
-`(not).
-`(as).
-`(that).
-`(less).
-`(more).
-`(least).
-`(most).
-`(many).
-`(where).
-`(when).
+~(how).
+~(whose).
+~(there).
+~(of).
+~('~').		% use ~ instead of ' to help assembler
+~(',').
+~(s).
+~(than).
+~(at).
+~(the).
+~(not).
+~(as).
+~(that).
+~(less).
+~(more).
+~(least).
+~(most).
+~(many).
+~(where).
+~(when).
 
 conj(and).
 conj(or).
