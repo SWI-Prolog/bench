@@ -20,6 +20,14 @@ try(_inpexpr, _anslist) :-
 	t_reduce(_curry, _ans),
 	make_list(_ans, _anslist).
 
+%%	SWI-Prolog V7 compatibility hacks.
+
+end(X) :- atom(X), !.
+end(X) :- X == [].
+
+list_functor_name(Name) :-
+	functor([_|_], Name, _).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Examples of applicative functions which can be compiled & executed.
@@ -50,8 +58,9 @@ t_def(append, [_a,_b], cond(_a=[], _b, [hd(_a)|append(tl(_a),_b)])).
 t_reduce(_expr, _ans) :-
 	atomic(_expr), !,
 	 _ans=_expr.
-% The reduction of '.' must be here to avoid an infinite loop
-t_reduce([_y,_x|'.'], [_yr,_xr|'.']) :-
+% The reduction of '$cons' must be here to avoid an infinite loop
+t_reduce([_y,_x|LF], [_yr,_xr|LF]) :-
+	list_functor_name(LF),
 	t_reduce(_x, _xr),
 	!,
 	t_reduce(_y, _yr),
@@ -91,13 +100,15 @@ t_redex([_f|apply], _fr) :-
 
 % List operations:
 t_redex([_arg|hd], _x) :-
-	t_reduce(_arg, [_y,_x|'.']).
+	list_functor_name(LF),
+	t_reduce(_arg, [_y,_x|LF]).
 t_redex([_arg|tl], _y) :-
-	t_reduce(_arg, [_y,_x|'.']).
+	list_functor_name(LF),
+	t_reduce(_arg, [_y,_x|LF]).
 
 % Arithmetic:
 t_redex([_y,_x|_op], _res) :-
-	atom(_op),
+	end(_op),
 	member(_op, ['+', '-', '*', '//', 'mod']),
 	t_reduce(_x, _xres),
 	t_reduce(_y, _yres),
@@ -106,7 +117,7 @@ t_redex([_y,_x|_op], _res) :-
 
 % Tests:
 t_redex([_y,_x|_test], _res) :-
-	atom(_test),
+	end(_test),
 	member(_test, [<, >, =<, >=, =\=, =:=]),
 	t_reduce(_x, _xres),
 	t_reduce(_y, _yres),
@@ -124,7 +135,7 @@ t_redex([_y,_x|=], _res) :-
 
 % Arithmetic functions:
 t_redex([_x|_op], _res) :-
-	atom(_op),
+	end(_op),
 	member(_op, ['-']),
 	t_reduce(_x, _xres),
 	number(_xres),
@@ -135,7 +146,7 @@ t_redex([_x|_op], _res) :-
 % defined function.
 t_redex(_in, _out) :-
 	append(_par,_func,_in),
-	atom(_func),
+	end(_func),
 	t_def(_func, _args, _expr),
 	t(_args, _expr, _def),
 	append(_par,_def,_out).
@@ -218,7 +229,7 @@ t_trans(_x, _e, [_ve|_], [_e|k]) :- notinv(_x, _ve).
 t_trans(_x, [_f|_e], [_vef,_sf,_se], _res) :-
 	_sf=[_vf|_],
 	_se=[_ve|_other],
-	(atom(_e); _other=[_,[_ve1|_]], _ve1\==[]),
+	(end(_e); _other=[_,[_ve1|_]], _ve1\==[]),
 	t_rule1(_x, _e, _ve, _se, _f, _vf, _sf, _res).
 t_trans(_x, [_g|[_f|_e]], [_vefg,_sg,_sef], _res) :-
 	_sg=[_vg|_],
@@ -267,7 +278,9 @@ t_rule2(_x, _e, _f, _vf, _sf, _g, _vg, _sg, [_resg,_f,_e|bp]) :-
 
 % Convert curried list into a regular list:
 make_list(_a, _a) :- atomic(_a).
-make_list([_b,_a|'.'], [_a|_rb]) :- make_list(_b, _rb).
+make_list([_b,_a|LF], [_a|_rb]) :-
+	list_functor_name(LF),
+	make_list(_b, _rb).
 
 listify(_X, _X) :-
 	(var(_X); atomic(_X)), !.
