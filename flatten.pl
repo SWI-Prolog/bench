@@ -143,7 +143,7 @@ varbag(Str, N, Arity) --> {N=<Arity}, !,
 
 inst_vars(Term) :-
 	varset(Term, Vars),
-        [A]="A",
+        [A]=`A`,
 	inst_vars_list(Vars, A).
 
 inst_vars_list([], _).
