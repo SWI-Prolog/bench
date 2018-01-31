@@ -7,8 +7,13 @@ run(S, F):-
 	compile_programs,
 	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
 	format(S, '~`=t~32|~n', []),
+	Total = total(0,0,0),
 	forall(program(P, N, F),
-	       run_program(P, N, S)).
+	       run_program(P, N, S, Total)),
+	Total = total(Count, Time, GC),
+	AvgT is Time/Count,
+	AvgGC is GC/Count,
+	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
 
 :- (   file_search_path(bench, _)
    ->  true
@@ -21,9 +26,18 @@ compile_programs :-
 	forall(program(P, _),
 	       load_files(P:bench(P), [silent(true), if(changed)])).
 
-run_program(Program, N, S) :-
+run_program(Program, N, S, Total) :-
 	ntimes(Program, N, Time, GC), !,
+	add(1, Total, 1),
+	add(2, Total, Time),
+	add(3, Total, GC),
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
+
+add(Arg, Term, Time) :-
+	arg(Arg, Term, T0),
+	T is T0+Time,
+	nb_setarg(Arg, Term, T).
+
 
 :- if(statistics(gctime, _)).
 get_performance_stats(GC, T):-
