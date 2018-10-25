@@ -1,5 +1,7 @@
 :- style_check(-singleton).
 
+:- initialization(run(1), main).
+
 run(F) :-
 	run(current_output, F).
 
