@@ -83,8 +83,11 @@ add(Arg, Term, Time) :-
 	T is T0+Time,
 	nb_setarg(Arg, Term, T).
 
-
-:- if(statistics(gctime, _)).
+:- if(current_prolog_flag(wine_version, _)).
+get_performance_stats(GC, T):-
+	statistics(gctime, GC),		% SWI-Prolog under Wine
+	statistics(process_cputime, T).
+:- elif(statistics(gctime, _)).
 get_performance_stats(GC, T):-
 	statistics(gctime, GC),		% SWI-Prolog
 	statistics(cputime, T).
