@@ -35,12 +35,13 @@
 % disable threading. This is needed for PGO (Profile Guided
 % Optimization)
 
+:- set_prolog_flag(gc_thread, false).
 :- (   current_thread(gc, running)
-   ->  print_message(informational, gc_thread(running))
+   ->  set_prolog_gc_thread(false),
+       print_message(informational, gc_thread(stopped))
    ;   true
    ).
 
-:- set_prolog_gc_thread(false).
 :- style_check(-singleton).
 
 :- initialization(run(1), main).
