@@ -35,6 +35,9 @@
 % disable threading. This is needed for PGO (Profile Guided
 % Optimization)
 
+:- autoload(library(backcomp), [current_thread/2]).
+:- autoload(library(statistics), [time/1]).
+
 :- set_prolog_flag(gc_thread, false).
 :- (   current_thread(gc, running)
    ->  set_prolog_gc_thread(false),
