@@ -14,3 +14,10 @@ callibrated to be run approximately  the   same  time. Factor scales the
 number of iterations. Factor=1 is callibrated for 1 second per benchmark
 on an AMD 5400+ using SWI-Prolog 5.9.7 (Linux, gcc 4.4 -O2).
 
+In addition to the `van Roy'   benchmarks, the following benchmarks have
+been added to extend the coverage of   this benchmark set. Good coverage
+is important to maximize the  benefits   of  Program Guided Optimization
+(PGO).  See CMAKE.md and scripts/pgo-compile.sh.
+
+  - queens_clpfd.pl
+    clp(fd) benchmark.
