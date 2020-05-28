@@ -21,3 +21,9 @@ is important to maximize the  benefits   of  Program Guided Optimization
 
   - queens_clpfd.pl
     clp(fd) benchmark.
+  - pingpong.pl
+    Tabling benchmark copied from 20kpingpong-swi.pl from
+    https://github.com/JanWielemaker/tabling_benchmarks.git
+  - fib.pl
+    Tabling benchmark copied from 1000fib-swi.pl from
+    https://github.com/JanWielemaker/tabling_benchmarks.git

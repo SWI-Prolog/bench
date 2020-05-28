@@ -181,6 +181,10 @@ program(zebra,		 166).
 
 % Later additions
 program(queens_clpfd,	 1).
+program(pingpong,	 8).
+:- if(current_prolog_flag(bounded,false)).
+program(fib,	         70).
+:- endif.
 
 
 		 /*******************************
