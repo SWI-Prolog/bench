@@ -19,6 +19,8 @@ been added to extend the coverage of   this benchmark set. Good coverage
 is important to maximize the  benefits   of  Program Guided Optimization
 (PGO).  See CMAKE.md and scripts/pgo-compile.sh.
 
+  - sieve.pl
+    Benchmark assert/retract and indexing.
   - queens_clpfd.pl
     clp(fd) benchmark.
   - pingpong.pl

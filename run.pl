@@ -180,6 +180,7 @@ program(tak,		 35).
 program(zebra,		 166).
 
 % Later additions
+program(sieve,		 16).
 program(queens_clpfd,	 1).
 program(pingpong,	 8).
 :- if(current_prolog_flag(bounded,false)).
