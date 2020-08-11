@@ -36,8 +36,12 @@
 % disable threading. This is needed for PGO (Profile Guided
 % Optimization)
 
-:- autoload(library(backcomp), [current_thread/2]).
-:- autoload(library(statistics), [time/1]).
+swi :-
+	current_prolog_flag(version_data, swi(_,_,_,_)).
+
+:- if(swi).
+:- use_module(library(statistics), [time/1]).
+:- use_module(library(backcomp), [current_thread/2]).
 
 :- set_prolog_flag(gc_thread, false).
 :- (   current_thread(gc, running)
@@ -49,9 +53,11 @@
 :- style_check(-singleton).
 
 :- initialization(run(1), main).
+:- endif.
 
 run(F) :-
-	run(current_output, F).
+	current_output(Out),
+	run(Out, F).
 
 run(S, F):-
 	compile_programs,
@@ -181,10 +187,12 @@ program(zebra,		 166).
 
 % Later additions
 program(sieve,		 16).
+:- if(swi).
 program(queens_clpfd,	 1).
 program(pingpong,	 8).
 :- if(current_prolog_flag(bounded,false)).
 program(fib,	         70).
+:- endif.
 :- endif.
 
 
