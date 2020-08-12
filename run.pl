@@ -38,6 +38,8 @@
 
 swi :-
 	current_prolog_flag(version_data, swi(_,_,_,_)).
+yap :-
+	current_prolog_flag(version_data, yap(_,_,_,_)).
 
 :- if(swi).
 :- use_module(library(statistics), [time/1]).
@@ -187,13 +189,11 @@ program(zebra,		 166).
 
 % Later additions
 program(sieve,		 16).
-:- if(swi).
-program(queens_clpfd,	 1).
+program(queens_clpfd,	 1) :-
+	\+ yap.				% clpfd is broken in YAP 6.5.0
 program(pingpong,	 8).
-:- if(current_prolog_flag(bounded,false)).
-program(fib,	         70).
-:- endif.
-:- endif.
+program(fib,	         70) :-
+	current_prolog_flag(bounded,false).
 
 
 		 /*******************************
