@@ -1,9 +1,10 @@
 % generated: 7 March 1990
-% option(s): 
+% option(s):
 %
 %   (deriv) divide10
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
 %   symbolic derivative of ((((((((x/x)/x)/x)/x)/x)/x)/x)/x)/x
 
@@ -12,7 +13,7 @@ top:-divide10.
 
 divide10 :- d(((((((((x/x)/x)/x)/x)/x)/x)/x)/x)/x,x,_).
 
-d(U+V,X,DU+DV) :- !, 
+d(U+V,X,DU+DV) :- !,
     d(U,X,DU),
     d(V,X,DV).
 d(U-V,X,DU-DV) :- !,
@@ -24,7 +25,7 @@ d(U*V,X,DU*V+U*DV) :- !,
 d(U/V,X,(DU*V-U*DV)/(^(V,2))) :- !,
     d(U,X,DU),
     d(V,X,DV).
-d(^(U,N),X,DU*N*(^(U,N1))) :- !, 
+d(^(U,N),X,DU*N*(^(U,N1))) :- !,
     integer(N),
     N1 is N-1,
     d(U,X,DU).

@@ -1,11 +1,12 @@
 % generated: 17 November 1989
-% option(s): 
+% option(s):
 %
 %   serialise
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
-%   itemize (pick a "serial number" for each 
+%   itemize (pick a "serial number" for each
 %   unique integer in) a list of 25 integers
 
 top:-serialise.

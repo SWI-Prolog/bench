@@ -1,9 +1,10 @@
 % generated: 25 October 1989
-% option(s): 
+% option(s):
 %
 %   (deriv) log10
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
 %   symbolic derivative of log(log(log(log(log(log(log(log(log(log(x))))))))))
 
@@ -11,7 +12,7 @@ top:-log10.
 
 log10 :- d(log(log(log(log(log(log(log(log(log(log(x)))))))))),x,_).
 
-d(U+V,X,DU+DV) :- !, 
+d(U+V,X,DU+DV) :- !,
     d(U,X,DU),
     d(V,X,DV).
 d(U-V,X,DU-DV) :- !,
@@ -23,7 +24,7 @@ d(U*V,X,DU*V+U*DV) :- !,
 d(U/V,X,(DU*V-U*DV)/(^(V,2))) :- !,
     d(U,X,DU),
     d(V,X,DV).
-d(^(U,N),X,DU*N*(^(U,N1))) :- !, 
+d(^(U,N),X,DU*N*(^(U,N1))) :- !,
     integer(N),
     N1 is N-1,
     d(U,X,DU).

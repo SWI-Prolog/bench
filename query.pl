@@ -4,6 +4,7 @@
 %   query
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
 %   query population and area database to find coun-
 %   tries of approximately equal population density
@@ -13,15 +14,15 @@ top:-query.
 query :- query(_), fail.
 query.
 
-query([C1,D1,C2,D2]) :- 
-    density(C1,D1), 
+query([C1,D1,C2,D2]) :-
+    density(C1,D1),
     density(C2,D2),
     D1 > D2,
     T1 is 20*D1,
     T2 is 21*D2,
     T1 < T2.
 
-density(C,D) :- 
+density(C,D) :-
     pop(C,P),
     area(C,A),
     D is (P*100)//A.

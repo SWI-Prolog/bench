@@ -4,6 +4,7 @@
 %   qsort
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
 %   quicksort a list of 50 integers
 

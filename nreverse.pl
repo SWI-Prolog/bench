@@ -1,9 +1,10 @@
 % generated: 25 October 1989
-% option(s): 
+% option(s):
 %
 %   nreverse
 %
 %   David H. D. Warren
+%   Copyright: Public domain
 %
 %   "naive"-reverse a list of 30 integers
 
