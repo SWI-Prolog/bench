@@ -40,6 +40,11 @@ swi :-
 	current_prolog_flag(version_data, swi(_,_,_,_)).
 yap :-
 	current_prolog_flag(version_data, yap(_,_,_,_)).
+sicstus :-
+	current_prolog_flag(version_data, sicstus(_,_,_,_,_)).
+
+have_tabling :-
+	\+ sicstus.
 
 :- if(swi).
 :- use_module(library(statistics), [time/1]).
@@ -66,12 +71,21 @@ run(S, F):-
 	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
 	format(S, '~`=t~32|~n', []),
 	Total = total(0,0,0),
-	forall(program(P, N, F),
-	       run_program(P, N, S, Total)),
+	(   program(P, N, F),
+	    run_program(P, N, S, Total),
+	    fail
+	;   true
+	),
 	Total = total(Count, Time, GC),
-	AvgT is Time/Count,
-	AvgGC is GC/Count,
-	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
+	(   Count =:= 0
+	->  true
+	;   AvgT is Time/Count,
+	    AvgGC is GC/Count,
+	    format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC])
+	).
+
+:- multifile user:file_search_path/2.
+:- dynamic   user:file_search_path/2.
 
 :- (   file_search_path(bench, _)
    ->  true
@@ -80,9 +94,20 @@ run(S, F):-
    ).
 
 compile_programs :-
-	style_check(-singleton),
-	forall(program(P, _),
-	       load_files(P:bench(P), [silent(true), if(changed)])).
+	no_singletons,
+	(   program(P, _),
+	    load_files(P:bench(P), [if(changed)]),
+	    fail
+	;   true
+	).
+
+:- if(sicstus).
+no_singletons :-
+	set_prolog_flag(single_var_warnings, off).
+:- else.
+no_singletons :-
+	style_check(-singleton).
+:- endif.
 
 run_program(Program, N, S, Total) :-
 	ntimes(Program, N, Time, GC), !,
@@ -91,11 +116,16 @@ run_program(Program, N, S, Total) :-
 	add(3, Total, GC),
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
+:- if(sicstus).
+add(_, _, _).
+:- else.
 add(Arg, Term, Time) :-
 	arg(Arg, Term, T0),
 	T is T0+Time,
 	nb_setarg(Arg, Term, T).
+:- endif.
 
+:- if(swi).
 :- if(current_prolog_flag(wine_version, _)).
 get_performance_stats(GC, T):-
 	statistics(gctime, GC),		% SWI-Prolog under Wine
@@ -104,10 +134,17 @@ get_performance_stats(GC, T):-
 get_performance_stats(GC, T):-
 	statistics(gctime, GC),		% SWI-Prolog
 	statistics(cputime, T).
-:- else.
+:- endif.
+:- elif(yap).
 get_performance_stats(GC, T):-
 	statistics(garbage_collection, [_,_,TGC]),
 	statistics(cputime, [TT,_]),
+	GC is TGC / 1000,
+	T is TT / 1000.
+:- else.
+get_performance_stats(GC, T):-
+	statistics(garbage_collection, [_,_,TGC]),
+	statistics(runtime, [TT,_]),
 	GC is TGC / 1000,
 	T is TT / 1000.
 :- endif.
@@ -190,9 +227,12 @@ program(zebra,		 166).
 % Later additions
 program(sieve,		 16).
 program(queens_clpfd,	 1) :-
-	\+ yap.				% clpfd is broken in YAP 6.5.0
-program(pingpong,	 8).
+	\+ yap,				% clpfd is broken in YAP 6.5.0
+	\+ sicstus.			% Requires some porting
+program(pingpong,	 8) :-
+	have_tabling.
 program(fib,	         70) :-
+	have_tabling,
 	current_prolog_flag(bounded,false).
 
 
