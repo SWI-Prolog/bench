@@ -8,6 +8,16 @@
 top :- clean, primes(10000), fail.
 top.
 
+:- if(\+current_predicate(forall/2)).
+forall(Cond,Act) :- \+ ( Cond, \+ Act ).
+:- endif.
+:- if(\+current_predicate(ignore/1)).
+ignore(Goal) :- (Goal->true;true).
+:- endif.
+:- if(\+current_predicate(between/3)).
+:- use_module(library(between)).
+:- endif.
+
 :- dynamic prime/1, candidate/1.
 
 clean :-
