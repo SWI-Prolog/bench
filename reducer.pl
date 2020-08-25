@@ -40,7 +40,7 @@ t_def(fac, [N], cond(N=0, 1, N*fac(N-1))).
 t_def(quick, [_l], cond(_l=[], [],
 		 cond(tl(_l)=[], _l,
 		 quick2(split(hd(_l),tl(_l)))))).
-t_def(quick2, [_l], append(quick(hd(_l)), quick(tl(_l)))).
+t_def(quick2, [_l], my_append(quick(hd(_l)), quick(tl(_l)))).
 
 t_def(split, [_e,_l], cond(_l=[], [[_e]|[]],
 		    cond(hd(_l)=<_e, inserthead(hd(_l),split(_e,tl(_l))),
@@ -48,7 +48,7 @@ t_def(split, [_e,_l], cond(_l=[], [[_e]|[]],
 t_def(inserthead, [_e,_l], [[_e|hd(_l)]|tl(_l)]).
 t_def(inserttail, [_e,_l], [hd(_l)|[_e|tl(_l)]]).
 
-t_def(append, [_a,_b], cond(_a=[], _b, [hd(_a)|append(tl(_a),_b)])).
+t_def(my_append, [_a,_b], cond(_a=[], _b, [hd(_a)|my_append(tl(_a),_b)])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -109,7 +109,7 @@ t_redex([_arg|tl], _y) :-
 % Arithmetic:
 t_redex([_y,_x|_op], _res) :-
 	end(_op),
-	member(_op, ['+', '-', '*', '//', 'mod']),
+	my_member(_op, ['+', '-', '*', '//', 'mod']),
 	t_reduce(_x, _xres),
 	t_reduce(_y, _yres),
 	number(_xres), number(_yres),
@@ -118,7 +118,7 @@ t_redex([_y,_x|_op], _res) :-
 % Tests:
 t_redex([_y,_x|_test], _res) :-
 	end(_test),
-	member(_test, [<, >, =<, >=, =\=, =:=]),
+	my_member(_test, [<, >, =<, >=, =\=, =:=]),
 	t_reduce(_x, _xres),
 	t_reduce(_y, _yres),
 	number(_xres), number(_yres),
@@ -136,7 +136,7 @@ t_redex([_y,_x|=], _res) :-
 % Arithmetic functions:
 t_redex([_x|_op], _res) :-
 	end(_op),
-	member(_op, ['-']),
+	my_member(_op, ['-']),
 	t_reduce(_x, _xres),
 	number(_xres),
 	eval1(_op, _t, _xres).
@@ -145,11 +145,11 @@ t_redex([_x|_op], _res) :-
 % Assumes a fact t_def(_func,_def) in the database for every
 % defined function.
 t_redex(_in, _out) :-
-	append(_par,_func,_in),
+	my_append(_par,_func,_in),
 	end(_func),
 	t_def(_func, _args, _expr),
 	t(_args, _expr, _def),
-	append(_par,_def,_out).
+	my_append(_par,_def,_out).
 
 % Basic arithmetic and relational operators:
 
@@ -295,11 +295,11 @@ listify_list(I, N, _Expr, [_LA|_LArgs]) :- I=<N, !,
 	I1 is I+1,
 	listify_list(I1, N, _Expr, _LArgs).
 
-member(X, [X|_]).
-member(X, [_|L]) :- member(X, L).
+my_member(X, [X|_]).
+my_member(X, [_|L]) :- my_member(X, L).
 
-append([], L, L).
-append([X|L1], L2, [X|L3]) :- append(L1, L2, L3).
+my_append([], L, L).
+my_append([X|L1], L2, [X|L3]) :- my_append(L1, L2, L3).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
