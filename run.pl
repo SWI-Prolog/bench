@@ -234,6 +234,9 @@ program(pingpong,	 8) :-
 program(fib,	         70) :-
 	have_tabling,
 	current_prolog_flag(bounded,false).
+program(moded_path,   10000) :-
+	have_tabling,
+	\+ yap.				% Yap lacks lattice answer subsumption
 
 
 		 /*******************************
