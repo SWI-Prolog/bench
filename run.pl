@@ -237,6 +237,8 @@ program(fib,	         70) :-
 program(moded_path,   10000) :-
 	have_tabling,
 	\+ yap.				% Yap lacks lattice answer subsumption
+program(det,	         40) :-
+	swi.
 
 
 		 /*******************************
