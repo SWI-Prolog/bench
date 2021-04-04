@@ -32,6 +32,8 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+:- use_module(library(lists)).
+
 top :- numlist(1, 1000, List),
        forall(between(1, 10, _), slist(List, 0, _)),
        fail.
