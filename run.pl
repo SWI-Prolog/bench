@@ -56,8 +56,7 @@ have_tabling :-
 
 :- set_prolog_flag(gc_thread, false).
 :- (   current_thread(gc, running)
-   ->  set_prolog_gc_thread(false),
-       print_message(informational, gc_thread(stopped))
+   ->  set_prolog_gc_thread(false)
    ;   true
    ).
 
