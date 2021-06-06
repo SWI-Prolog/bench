@@ -3,8 +3,9 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2018-2020, VU University Amsterdam
+    Copyright (c)  2018-2021, VU University Amsterdam
 			      CWI, Amsterdam
+			      SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -46,6 +47,9 @@ sicstus :-
 have_tabling :-
 	\+ sicstus.
 
+:- dynamic
+	output_format/1.
+
 :- if(swi).
 :- use_module(library(statistics), [time/1]).
 :- use_module(library(backcomp), [current_thread/2]).
@@ -59,7 +63,16 @@ have_tabling :-
 
 :- style_check(-singleton).
 
-:- initialization(run(1), main).
+:- initialization(bench, main).
+
+bench :-
+	current_prolog_flag(argv, ['--csv']),
+	!,
+	asserta(output_format(csv)),
+	run(1).
+bench :-
+	run(1).
+
 :- endif.
 
 run(F) :-
@@ -68,8 +81,7 @@ run(F) :-
 
 run(S, F):-
 	compile_programs,
-	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
-	format(S, '~`=t~32|~n', []),
+	header(S),
 	Total = total(0,0,0),
 	(   program(P, N, F),
 	    run_program(P, N, S, Total),
@@ -81,8 +93,24 @@ run(S, F):-
 	->  true
 	;   AvgT is Time/Count,
 	    AvgGC is GC/Count,
-	    format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC])
+	    footer(S, AvgT, AvgGC)
 	).
+
+header(S) :-
+	output_format(csv),
+	!,
+	format(S, 'program,time,gc~n', []).
+header(S) :-
+	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
+	format(S, '~`=t~32|~n', []).
+
+footer(S, AvgT, AvgGC) :-
+	output_format(csv),
+	!,
+	report_time(S, average, AvgT, AvgGC).
+footer(S, AvgT, AvgGC) :-
+	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
+
 
 :- multifile user:file_search_path/2.
 :- dynamic   user:file_search_path/2.
@@ -114,7 +142,15 @@ run_program(Program, N, S, Total) :-
 	add(1, Total, 1),
 	add(2, Total, Time),
 	add(3, Total, GC),
+	report_time(S, Program, Time, GC).
+
+report_time(S, Program, Time, GC) :-
+	output_format(csv),
+	!,
+	format(S, '~w,~3f,~3f~n', [Program, Time, GC]).
+report_time(S, Program, Time, GC) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
+
 
 :- if(sicstus).
 add(_, _, _).
