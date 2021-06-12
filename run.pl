@@ -54,11 +54,13 @@ have_tabling :-
 :- use_module(library(statistics), [time/1]).
 :- use_module(library(backcomp), [current_thread/2]).
 
+:- if(current_prolog_flag(threads, true)).
 :- set_prolog_flag(gc_thread, false).
 :- (   current_thread(gc, running)
    ->  set_prolog_gc_thread(false)
    ;   true
    ).
+:- endif.
 
 :- style_check(-singleton).
 
