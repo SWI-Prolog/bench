@@ -1,9 +1,9 @@
-% Sdda3		5-Oct-86 
+% Sdda3		5-Oct-86
 % For use on simulator
 
 %% To do:  (look for '%%')
 %%	recursion - keep list of call procedures, ignore recursive calls
-%%	   	problem: doesn't work for typical procedure working on a list,
+%%		problem: doesn't work for typical procedure working on a list,
 %%			 since the list is smaller (different) each time.
 %%		possible optimization: "recognize" base case & skip to it
 %%	follow atoms, g is 'any atom', all others unique,  does it work?
@@ -12,25 +12,26 @@
 %%	handle disjunction - needs worst_case
 %%	add cuts where possible to save space
 %%	fill in rest of built-ins
-%% 	how to handle op?
+%%	how to handle op?
 %%	Handle assert/retract?  call?  (If given ground terms- ok, vars- no)
 %%		must have ground functor, definite number of args!
 
 % Front end for simulator use
 top :-
-	do_sdda(test,A,B,C).
+	do_sdda(test,_A,_B,_C),
+	!.
 
 % Does the sdda on FileName, instantiates Exitmodes to list of exit modes,
 % ExitModes structure: [[Funtor/Arity, Activation, Exit], ... ],
 % e.g. [[a/2, [g,X], [g,g]]
-do_sdda(FileName, ExitModes, BackList, PredList) :-
+do_sdda(_FileName, ExitModes, _BackList, _PredList) :-
 	%%see(FileName),
 	read_procedures(Procs, ExitModes, Entries),	% collect all procedures
 	%%seen,
 %	write('Procedures '), nl, write_list(Procs), nl,
 %	write('Entry points '), nl, write_list(Entries), nl,
 %	(nonvar(ExitModes) ->				% Don't mention there
-%		(write('Declared exit modes '), nl, 	% aren't any
+%		(write('Declared exit modes '), nl,	% aren't any
 %		 write_list(ExitModes), nl) ;
 %		true),
 	entry_exit_modes_list(Procs, ExitModes, Entries).
@@ -66,8 +67,8 @@ proc_exit_mode(_, Known, _, Functor/Arity, Act, Exit) :-
 	look_up_act([Functor/Arity, Act, Exit], Known).       % Already did this
 proc_exit_mode(ProcList, Known, Invocations, Functor/Arity, Act, Exit) :-
 	umember([Functor/Arity|Clauses], ProcList),	% Look up definition
-	dup(Clauses, ClausesCopy),			% Don't munge original 
-	clause_exit_modes_list(ProcList, Known, Invocations, 
+	dup(Clauses, ClausesCopy),			% Don't munge original
+	clause_exit_modes_list(ProcList, Known, Invocations,
 			       ClausesCopy, Act, Exits),
 	(Exits=[] -> fail ; true),		       % didn't find any => fail
 	worst_case(Exits, Exit),			% assume the worst
@@ -75,39 +76,39 @@ proc_exit_mode(ProcList, Known, Invocations, Functor/Arity, Act, Exit) :-
 	add_to_list([Functor/Arity, ActCopy, Exit], Known).   % binds Act & Exit
 proc_exit_mode(_, Known, _, Functor/Arity, Act, Exit) :-
 %	write('No such procedure at compile time '),
-	Activation=..[Functor|Act],
+	_Activation=..[Functor|Act],
 %	write(Activation), nl,
-	all_shared(Act, Exit),     	   % return worst possible - all shared 
+	all_shared(Act, Exit),		   % return worst possible - all shared
 	add_to_list([Functor/Arity, Act, Exit], Known).
 
 % Analyze all clauses for this procedure, instantiate Exits to all exit modes
 clause_exit_modes_list(_, _, _, Clauses, _, []) :-
 	var(Clauses), !.			       % No more clauses => done
-clause_exit_modes_list(ProcList, Known, Invocations, 
+clause_exit_modes_list(ProcList, Known, Invocations,
 		       [Clause|Clauses], Act, Exits) :-
-	eqmember([Clause, Act], Invocations), 		% This is a recursive 
-%    write('skipping clause exit mode for '), 
+	eqmember([Clause, Act], Invocations),		% This is a recursive
+%    write('skipping clause exit mode for '),
 %    write(Clause), write(' '), write(Act), nl,
 	clause_exit_modes_list(ProcList, Known, Invocations,	% call, ignore
 			       Clauses, Act, Exits).		% it
-clause_exit_modes_list(ProcList, Known, Invocations, 
+clause_exit_modes_list(ProcList, Known, Invocations,
 		       [Clause|Clauses], Act, [Exit|Exits]) :-
 	dup(Act, Exit),					% We'll bind Exit
-	clause_exit_mode(ProcList, Known, [[Clause, Act]|Invocations], 
-		 	 Clause, Exit),			% Record invocation
-	clause_exit_modes_list(ProcList, Known, Invocations, 
-		     	       Clauses, Act, Exits).
-clause_exit_modes_list(ProcList, Known, Invocations, 
-		       [Clause|Clauses], Act, Exits) :- 	% Unify failed
-	clause_exit_modes_list(ProcList, Known, Invocations, 
-			       Clauses, Act, Exits).   
+	clause_exit_mode(ProcList, Known, [[Clause, Act]|Invocations],
+			 Clause, Exit),			% Record invocation
+	clause_exit_modes_list(ProcList, Known, Invocations,
+			       Clauses, Act, Exits).
+clause_exit_modes_list(ProcList, Known, Invocations,
+		       [_|Clauses], Act, Exits) :-	% Unify failed
+	clause_exit_modes_list(ProcList, Known, Invocations,
+			       Clauses, Act, Exits).
 
 % Given activation modes for this clause, return its exit modes
 clause_exit_mode(ProcList, Known, Invocations, Clause, Act) :-
 	(Clause = ':-'(Head, Body) ; Clause=Head, Body=true),	% Decompose it
 	Head =.. [_|Args],					% Bind the head
 	unify(Args, Act),					% to activation
-	body_exit_mode(ProcList, Known, Invocations, Body). 	% do the body
+	body_exit_mode(ProcList, Known, Invocations, Body).	% do the body
 
 body_exit_mode(ProcList, Known, Invocations, ','(Goal, Goals)) :-  % Conjunction
 	body_exit_mode(ProcList, Known, Invocations, Goal),	% Do 1st
@@ -116,15 +117,15 @@ body_exit_mode(ProcList, Known, Invocation, Goal) :-
 	functor(Goal, Functor, Arity),
 	Goal =.. [Functor|Act],
 	proc_exit_mode(ProcList, Known, Invocation, Functor/Arity, Act, Exit),
-	unify(Act, Exit).	
+	unify(Act, Exit).
 
 % Unifies Left and Right with the special case that the atom 'g' matches
 % any atom (except [])
 unify(Left, Left) :- !.				% Try standard unify first
 unify(Left, g) :-				% else, is it special case
-	atomic(Left), !,			
+	atomic(Left), !,
 	\+ Left=[].
-unify(g, Right) :-				
+unify(g, Right) :-
 	atomic(Right), !,
 	\+ Right=[].
 unify([LeftHead|LeftTail], [RightHead|RightTail]) :-	% or list
@@ -134,26 +135,26 @@ unify(Left, Right) :-					% or structure
 	Left =.. [Functor|LeftArgs],
 	Right =.. [Functor|RightArgs],
 	unify(LeftArgs, RightArgs).
-	
-% Succeed if Left and Right are equivalent, i.e. they are the exact same 
+
+% Succeed if Left and Right are equivalent, i.e. they are the exact same
 % with variables renamed
-equiv(Left, Right) :- 
+equiv(Left, Right) :-
 	equiv(Left, Right, _).
-equiv(Left, Right, _) :-		
-	Left==Right, !.			
-equiv(g, Right, _) :-		
+equiv(Left, Right, _) :-
+	Left==Right, !.
+equiv(g, Right, _) :-
 	atomic(Right), !,
-	\+ Right=[].			
+	\+ Right=[].
 equiv(Left, g, _) :-
 	atomic(Left), !,
-	\+ Left=[].			
+	\+ Left=[].
 equiv(Left, Right, Bindings) :-
 	var(Left), !,
-	var(Right), 
+	var(Right),
 	equiv_vars(Left, Right, Bindings).
 equiv(Left, Right, Bindings) :-
 	var(Right), !,
-	var(Left), 
+	var(Left),
 	equiv_vars(Left, Right, Bindings).
 equiv([LeftHead|LeftTail], [RightHead|RightTail], Bindings) :-
 	!, equiv(LeftHead, RightHead, Bindings),
@@ -202,18 +203,18 @@ dup_var(Orig, Copy, [_|Bindings]) :-
 
 % ----- Built-ins ----- %
 
-built_in(true/0, [], []).			% No change 
-built_in(fail/0, [], []).			% No change 
-built_in('='/2, [X, Y], [g, g]) :- 
-	(atomic(X) ; atomic(Y)). 		% Ground both if either atomic
-built_in('='/2, [X, Y], [X, X]).		% else bind them 
-built_in(/('+',2), [X, Y], [X, Y]).		% No change 
-built_in(/('-',2), [X, Y], [X, Y]).		% No change 
-built_in(/('*',2), [X, Y], [X, Y]).		% No change 
-built_in(/('/',2), [X, Y], [X, Y]).		% No change 
-built_in(/('>=',2), [X, Y], [X, Y]).		% No change 
-built_in(/('<',2), [X, Y], [X, Y]).		% No change 
-built_in(is/2, [X, Y], [g, Y]).			% Ground result 
+built_in(true/0, [], []).			% No change
+built_in(fail/0, [], []).			% No change
+built_in('='/2, [X, Y], [g, g]) :-
+	(atomic(X) ; atomic(Y)).		% Ground both if either atomic
+built_in('='/2, [X, _Y], [X, X]).		% else bind them
+built_in(/('+',2), [X, Y], [X, Y]).		% No change
+built_in(/('-',2), [X, Y], [X, Y]).		% No change
+built_in(/('*',2), [X, Y], [X, Y]).		% No change
+built_in(/('/',2), [X, Y], [X, Y]).		% No change
+built_in(/('>=',2), [X, Y], [X, Y]).		% No change
+built_in(/('<',2), [X, Y], [X, Y]).		% No change
+built_in(is/2, [_X, Y], [g, Y]).		% Ground result
 
 % ----- Utilities ----- %
 
@@ -223,10 +224,10 @@ worst_case([Exit|Exits], Worst) :-		%% fail to match, e.g.
 	worst_case(Exits, Worst).
 
 look_up_act(_, Known) :-
-	var(Known), 
-	!, fail.    
+	var(Known),
+	!, fail.
 look_up_act([Functor/Arity, Act, Exit], [[Functor/Arity, KnownAct, Exit]|_]) :-
-	equiv(Act, KnownAct).    
+	equiv(Act, KnownAct).
 look_up_act([Functor/Arity, Act, Exit], [_|Known]) :-
 	look_up_act([Functor/Arity, Act, Exit], Known).
 
@@ -235,9 +236,12 @@ all_shared(Act, Exit) :-			%% Wrong
 	bind_all(_, VarModesList),
 	unify(Act, Exit, VarModesList).
 
+unify(_,_,[]).					 % JW: what should this do?
+
+
 bind_all(_, VarModesList) :-
 	var(VarModesList).
-bind_all(Mode, [[Var, Mode]|VarModesList]) :-
+bind_all(Mode, [[_Var, Mode]|VarModesList]) :-
 	var(Mode),
 	bind_all(Mode, VarModesList).
 bind_all(Mode, [[_, _]|VarModesList]) :-
@@ -252,13 +256,13 @@ add_to_list(Element, [_|List]) :-
 	add_to_list(Element, List).
 
 % Membership relation for unbound-tail lists
-umember(_, List) :- 
+umember(_, List) :-
 	var(List), !, fail.
 umember(Element, [Element|_]).
 umember(Element, [_|Tail]) :- umember(Element, Tail).
 
 % Strict membership relation for unbound-tail lists
-sumember(_, List) :- 
+sumember(_, List) :-
 	var(List), !, fail.
 sumember(Element, [AnyElement|_]) :- Element==AnyElement.
 sumember(Element, [_|Tail]) :- sumember(Element, Tail).
@@ -283,17 +287,17 @@ concat([X|L1], L2, [X|L3]) :- concat(L1, L2, L3).
 %write_list(List) :-
 %	dup(List, NewList),
 %	(var(NewList) -> (name_vars(NewList, 0, _));
-%			  write(NewList)) ; 
-%		         (write('['), 
-%		      	  write_list2(NewList, 0, _), 
-%		          write('|_].'))), 	% write('].') to write nil tails
-	nl.				
-write_list2([H|T], NextName, NewNextName) :- 
+%			  write(NewList)) ;
+%		         (write('['),
+%			  write_list2(NewList, 0, _),
+%		          write('|_].'))),	% write('].') to write nil tails
+%	nl.
+write_list2([H|T], NextName, NewNextName) :-
 	name_vars(H, NextName, TempNextName),
 	write(H),
-	(nonvar(T) -> (write(','), nl, 
-		       write(' '), 
-		       write_list2(T, TempNextName, NewNextName)) ; 
+	(nonvar(T) -> (write(','), nl,
+		       write(' '),
+		       write_list2(T, TempNextName, NewNextName)) ;
 		      NewNextName = TempNextName).
 
 name_vars(Term, NextName, NewNextName) :-
