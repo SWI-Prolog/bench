@@ -264,11 +264,16 @@ program(boyer,		 8).
 program(browse,		 7).
 program(chat_parser,	 46).
 program(crypt,		 868).
+program(derive,		 75000).
 program(fast_mu,	 4819).
 program(flatten,	 8275).
+program(log10,		 150000).
 program(meta_qsort,	 966).
 program(mu,		 6827).
+program(nand,		 140).
 program(nreverse,	 11378).
+program(ops8,		 100000).
+program(perfect,	 200).
 program(poly_10,	 105).
 program(prover,		 6400).
 program(qsort,		 8445).
@@ -276,8 +281,11 @@ program(queens_8,	 63).
 program(query,		 1219).
 program(reducer,	 164).
 program(sendmore,	 44).
+program(serialise,	 7000).
 program(simple_analyzer, 320).
 program(tak,		 35).
+program(times10,	 70000).
+program(unify,		 1000).
 program(zebra,		 166).
 
 % Later additions
