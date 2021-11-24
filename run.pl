@@ -53,6 +53,8 @@ have_tabling :-
 :- if(swi).
 :- use_module(library(statistics), [time/1]).
 :- use_module(library(backcomp), [current_thread/2]).
+:- use_module(library(main), [argv_options/3]).
+:- use_module(library(option), [option/2, option/3]).
 
 :- if(current_prolog_flag(threads, true)).
 :- set_prolog_flag(gc_thread, false).
@@ -67,12 +69,23 @@ have_tabling :-
 :- initialization(bench, main).
 
 bench :-
-	current_prolog_flag(argv, ['--csv']),
-	!,
-	asserta(output_format(csv)),
-	run(1).
-bench :-
-	run(1).
+	current_prolog_flag(argv, Argv),
+	argv_options(Argv, _, Options),
+	(   option(csv(true), Options)
+	->  asserta(output_format(csv))
+	;   true
+	),
+	option(speedup(N), Options, 1),
+	F is 1/N,
+	run(F).
+
+opt_type(csv,     csv,     boolean).
+opt_type(speedup, speedup, number).
+
+opt_help(csv,     "Use CSV output format").
+opt_help(speedup, "Speedup tests (10 means 10 times faster)").
+
+opt_meta(speedup, 'TIMES').
 
 :- endif.
 
@@ -85,6 +98,7 @@ run(S, F):-
 	header(S),
 	Total = total(0,0,0),
 	(   program(P, N, F),
+	    current_predicate(P:top/0),	% only if really loaded
 	    run_program(P, N, S, Total),
 	    fail
 	;   true
@@ -125,7 +139,12 @@ footer(S, AvgT, AvgGC) :-
 compile_programs :-
 	no_singletons,
 	(   program(P, _),
-	    load_files(P:bench(P), [if(changed)]),
+	    absolute_file_name(bench(P), AbsFile,
+			       [ file_type(prolog),
+				 access(read),
+				 file_errors(fail)
+			       ]),
+	    load_files(P:AbsFile, [if(changed)]),
 	    fail
 	;   true
 	).
