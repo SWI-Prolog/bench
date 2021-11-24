@@ -1,7 +1,7 @@
 % Copied from https://swish.swi-prolog.org/example/clpfd_queens.pl
 % Author: Markus Triska
 
-top :- n_queens(200,_), fail.
+top :- n_queens(50,_), fail.
 top.
 
 :- use_module(library(clpfd)).

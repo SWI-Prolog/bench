@@ -137,6 +137,10 @@ footer(S, AvgT, AvgGC) :-
    ).
 
 compile_programs :-
+	forall(program(P, _),
+	       compile_program(P)).
+
+compile_program(P) :-
 	no_singletons,
 	(   program(P, _),
 	    absolute_file_name(bench(P), AbsFile,
@@ -240,6 +244,7 @@ dummy.
 %	test runs for about 1 second.
 
 tune_counts :-
+	compile_programs,
 	forall(program(P, _),
 	       (   tune_count(P, C),
 		   format('~q.~n', [program(P, C)]))).
@@ -255,53 +260,54 @@ program(P, N, F) :-
 	program(P, N0),
 	N is max(1, round(N0*F)).
 
-%%	program(?Program, ?Times)
+%!	program(?Program, ?Times)
 %
-%	Times are tuned on Jan 24, 2010, using SWI-Prolog 5.9.7 on
-%	AMD 5400+ (gcc 4.4.1; AMD64 mode)
+%	Times are tuned on Nov 24,  2021 using SWI-Prolog 8.5.2 compiled
+%	using GCC-11 on AMD 3950X  to  run   for  1  second.  Tuning did
+%	__not__ use -O and used the normal ``RelWithDebInfo`` build.
 
-program(boyer,		 8).
-program(browse,		 7).
-program(chat_parser,	 46).
-program(crypt,		 868).
-program(derive,		 75000).
-program(fast_mu,	 4819).
-program(flatten,	 8275).
-program(log10,		 150000).
-program(meta_qsort,	 966).
-program(mu,		 6827).
-program(nand,		 140).
-program(nreverse,	 11378).
-program(ops8,		 100000).
-program(perfect,	 200).
-program(poly_10,	 105).
-program(prover,		 6400).
-program(qsort,		 8445).
-program(queens_8,	 63).
-program(query,		 1219).
-program(reducer,	 164).
-program(sendmore,	 44).
-program(serialise,	 7000).
-program(simple_analyzer, 320).
-program(tak,		 35).
-program(times10,	 70000).
-program(unify,		 1000).
-program(zebra,		 166).
+program(boyer,		 47).
+program(browse,		 32).
+program(chat_parser,	 128).
+program(crypt,		 3480).
+program(derive,		 279547).
+program(fast_mu,	 17354).
+program(flatten,	 33146).
+program(log10,		 1199682).
+program(meta_qsort,	 3923).
+program(mu,		 23549).
+program(nand,		 1005).
+program(nreverse,	 71340).
+program(ops8,		 744744).
+program(perfect,	 1423).
+program(poly_10,	 420).
+program(prover,		 21909).
+program(qsort,		 27207).
+program(queens_8,	 232).
+program(query,		 4192).
+program(reducer,	 567).
+program(sendmore,	 127).
+program(serialise,	 53129).
+program(simple_analyzer, 1144).
+program(tak,		 128).
+program(times10,	 704988).
+program(unify,		 8363).
+program(zebra,		 576).
 
 % Later additions
-program(sieve,		 16).
-program(queens_clpfd,	 1) :-
+program(sieve,		 56).
+program(queens_clpfd,	 67) :-
 	\+ yap,				% clpfd is broken in YAP 6.5.0
 	\+ sicstus.			% Requires some porting
-program(pingpong,	 8) :-
+program(pingpong,	 25) :-
 	have_tabling.
-program(fib,	         70) :-
+program(fib,	         266) :-
 	have_tabling,
 	current_prolog_flag(bounded,false).
-program(moded_path,   10000) :-
+program(moded_path,      37773) :-
 	have_tabling,
 	\+ yap.				% Yap lacks lattice answer subsumption
-program(det,	         40) :-
+program(det,	         169) :-
 	swi.
 
 
