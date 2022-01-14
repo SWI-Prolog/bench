@@ -279,7 +279,8 @@ program(mu,		 23549).
 program(nand,		 1005).
 program(nreverse,	 71340).
 program(ops8,		 744744).
-program(perfect,	 1423).
+program(perfect,	 1423) :-
+	current_prolog_flag(bounded, false).
 program(poly_10,	 420).
 program(prover,		 21909).
 program(qsort,		 27207).
