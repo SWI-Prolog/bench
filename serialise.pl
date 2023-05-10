@@ -9,9 +9,12 @@
 %   itemize (pick a "serial number" for each
 %   unique integer in) a list of 25 integers
 
-top:-serialise.
+top :-
+    serialise.
 
-serialise :- serialise(`ABLE WAS I ERE I SAW ELBA`,_).
+serialise :-
+    atom_codes('ABLE WAS I ERE I SAW ELBA', Codes),
+    serialise(Codes,_).
 
 serialise(L,R) :-
     pairlists(L,R,A),

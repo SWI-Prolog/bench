@@ -8,13 +8,13 @@
 top :- clean, primes(10000), fail.
 top.
 
-:- if(\+current_predicate(forall/2)).
+:- if(\+predicate_property(forall(_,_), _)).
 forall(Cond,Act) :- \+ ( Cond, \+ Act ).
 :- endif.
-:- if(\+current_predicate(ignore/1)).
+:- if(\+predicate_property(ignore(_), _)).
 ignore(Goal) :- (Goal->true;true).
 :- endif.
-:- if(\+current_predicate(between/3)).
+:- if(\+predicate_property(between(_,_,_),_)).
 :- use_module(library(between)).
 :- endif.
 
