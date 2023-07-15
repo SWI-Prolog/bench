@@ -1,6 +1,9 @@
 % Where does the zebra live?
 % Puzzle solution written by Claude Sammut.
 top:-
+	zebra(_Houses).
+
+zebra(Houses) :-
 	houses(Houses),
 	my_member(house(red, english, _, _, _), Houses),
 	my_member(house(_, spanish, dog, _, _), Houses),
@@ -18,7 +21,6 @@ top:-
 	next_to(house(_,norwegian,_,_,_), house(blue,_,_,_,_), Houses),
 	my_member(house(_, _, zebra, _, _), Houses),
 	my_member(house(_, _, _, water, _), Houses).
-%	print_houses(Houses).
 
 houses([
 	house(_, _, _, _, _),
