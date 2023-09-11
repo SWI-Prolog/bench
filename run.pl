@@ -310,6 +310,7 @@ program(moded_path,      37773) :-
 	\+ yap.				% Yap lacks lattice answer subsumption
 program(det,	         169) :-
 	swi.
+program(eval,		 10000).
 
 
 		 /*******************************
