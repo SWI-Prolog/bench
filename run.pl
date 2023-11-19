@@ -85,7 +85,7 @@ opt_help(speedup, "Speedup tests (10 means 10 times faster)").
 
 opt_meta(speedup, 'TIMES').
 
-:- thread_local result/3.		% Program, Time, GC
+:- thread_local(result/3).		% Program, Time, GC
 :- else.
 :- dynamic result/3.
 :- endif.
