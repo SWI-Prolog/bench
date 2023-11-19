@@ -1,6 +1,10 @@
 % Author: Jan Wielemaker
 % This code is in the public domain
 
+:- if(current_prolog_flag(dialect, sicstus)).
+:- use_module(library(between)).
+:- endif.
+
 top :-
     t_(1000, 1).
 

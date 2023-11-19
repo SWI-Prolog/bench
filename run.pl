@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2018-2021, VU University Amsterdam
+    Copyright (c)  2018-2023, VU University Amsterdam
 			      CWI, Amsterdam
 			      SWI-Prolog Solutions b.v.
     All rights reserved.
@@ -87,6 +87,13 @@ opt_help(speedup, "Speedup tests (10 means 10 times faster)").
 
 opt_meta(speedup, 'TIMES').
 
+:- thread_local result/3.		% Program, Time, GC
+:- else.
+:- dynamic result/3.
+:- endif.
+
+:- if(sicstus).
+forall(Cond, Action) :- \+ (Cond, \+ Action).
 :- endif.
 
 run(F) :-
@@ -94,22 +101,35 @@ run(F) :-
 	run(Out, F).
 
 run(S, F):-
+	retractall(result(_,_,_)),
 	compile_programs,
 	header(S),
-	Total = total(0,0,0),
 	(   program(P, N, F),
 	    current_predicate(P:top/0),	% only if really loaded
-	    run_program(P, N, S, Total),
+	    run_program(P, N, S),
 	    fail
 	;   true
 	),
-	Total = total(Count, Time, GC),
-	(   Count =:= 0
-	->  true
-	;   AvgT is Time/Count,
-	    AvgGC is GC/Count,
-	    footer(S, AvgT, AvgGC)
-	).
+	findall(t(Time, GC), retract(result(_,Time,GC)), List),
+	split(List, Times, GCs),	% avoid library preds for portability
+	suml(Times, Time),
+	suml(GCs, GC),
+	length(List, Count),
+	AvgT is Time/Count,
+	AvgGC is GC/Count,
+	footer(S, AvgT, AvgGC).
+
+split([], [], []).
+split([t(T,G)|M], [T|Ta], [G|Tb]) :-
+	split(M, Ta, Tb).
+
+suml(List, N) :-
+	suml_(List, 0, N).
+
+suml_([], N, N).
+suml_([H|T], N0, N) :-
+	N1 is N0+H,
+	suml_(T, N1, N).
 
 header(S) :-
 	output_format(csv),
@@ -144,7 +164,7 @@ compile_program(P) :-
 	no_singletons,
 	(   program(P, _),
 	    absolute_file_name(bench(P), AbsFile,
-			       [ file_type(prolog),
+			       [ file_type(source),
 				 access(read),
 				 file_errors(fail)
 			       ]),
@@ -161,11 +181,9 @@ no_singletons :-
 	style_check(-singleton).
 :- endif.
 
-run_program(Program, N, S, Total) :-
+run_program(Program, N, S) :-
 	ntimes(Program, N, Time, GC), !,
-	add(1, Total, 1),
-	add(2, Total, Time),
-	add(3, Total, GC),
+	assertz(result(Program, Time, GC)),
 	report_time(S, Program, Time, GC).
 
 report_time(S, Program, Time, GC) :-
@@ -174,16 +192,6 @@ report_time(S, Program, Time, GC) :-
 	format(S, '~w,~3f,~3f~n', [Program, Time, GC]).
 report_time(S, Program, Time, GC) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
-
-
-:- if(sicstus).
-add(_, _, _).
-:- else.
-add(Arg, Term, Time) :-
-	arg(Arg, Term, T0),
-	T is T0+Time,
-	nb_setarg(Arg, Term, T).
-:- endif.
 
 :- if(swi).
 :- if(current_prolog_flag(wine_version, _)).
