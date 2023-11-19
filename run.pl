@@ -47,9 +47,6 @@ sicstus :-
 have_tabling :-
 	\+ sicstus.
 
-:- dynamic
-	output_format/1.
-
 :- if(swi).
 :- use_module(library(statistics), [time/1]).
 :- use_module(library(backcomp), [current_thread/2]).
@@ -71,13 +68,14 @@ have_tabling :-
 bench :-
 	current_prolog_flag(argv, Argv),
 	argv_options(Argv, _, Options),
-	(   option(csv(true), Options)
-	->  asserta(output_format(csv))
-	;   true
-	),
 	option(speedup(N), Options, 1),
 	F is 1/N,
-	run(F).
+	(   option(cvs(true), Options)
+	->  Format = csv
+	;   Format = default
+	),
+	current_output(Out),
+	run(Out, F, Format).
 
 opt_type(csv,     csv,     boolean).
 opt_type(speedup, speedup, number).
@@ -98,15 +96,19 @@ forall(Cond, Action) :- \+ (Cond, \+ Action).
 
 run(F) :-
 	current_output(Out),
-	run(Out, F).
+	run(Out, F, default).
 
-run(S, F):-
+run(F, Format) :-
+	current_output(Out),
+	run(Out, F, Format).
+
+run(S, F, Format):-
 	retractall(result(_,_,_)),
 	compile_programs,
-	header(S),
+	header(S, Format),
 	(   program(P, N, F),
 	    current_predicate(P:top/0),	% only if really loaded
-	    run_program(P, N, S),
+	    run_program(P, N, S, Format),
 	    fail
 	;   true
 	),
@@ -117,7 +119,7 @@ run(S, F):-
 	length(List, Count),
 	AvgT is Time/Count,
 	AvgGC is GC/Count,
-	footer(S, AvgT, AvgGC).
+	footer(S, AvgT, AvgGC, Format).
 
 split([], [], []).
 split([t(T,G)|M], [T|Ta], [G|Tb]) :-
@@ -131,19 +133,17 @@ suml_([H|T], N0, N) :-
 	N1 is N0+H,
 	suml_(T, N1, N).
 
-header(S) :-
-	output_format(csv),
+header(S, csv) :-
 	!,
 	format(S, 'program,time,gc~n', []).
-header(S) :-
+header(S, _) :-
 	format(S, '~p~t~18| ~t~w~25| ~t~w~32|~n', ['Program', 'Time', 'GC']),
 	format(S, '~`=t~32|~n', []).
 
-footer(S, AvgT, AvgGC) :-
-	output_format(csv),
+footer(S, AvgT, AvgGC, csv) :-
 	!,
-	report_time(S, average, AvgT, AvgGC).
-footer(S, AvgT, AvgGC) :-
+	report_time(S, average, AvgT, AvgGC, csv).
+footer(S, AvgT, AvgGC, _) :-
 	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
 
 
@@ -181,16 +181,15 @@ no_singletons :-
 	style_check(-singleton).
 :- endif.
 
-run_program(Program, N, S) :-
+run_program(Program, N, S, Format) :-
 	ntimes(Program, N, Time, GC), !,
 	assertz(result(Program, Time, GC)),
-	report_time(S, Program, Time, GC).
+	report_time(S, Program, Time, GC, Format).
 
-report_time(S, Program, Time, GC) :-
-	output_format(csv),
+report_time(S, Program, Time, GC, csv) :-
 	!,
 	format(S, '~w,~3f,~3f~n', [Program, Time, GC]).
-report_time(S, Program, Time, GC) :-
+report_time(S, Program, Time, GC, _) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
 :- if(swi).
