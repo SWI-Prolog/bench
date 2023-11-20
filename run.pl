@@ -37,17 +37,10 @@
 % disable threading. This is needed for PGO (Profile Guided
 % Optimization)
 
-swi :-
-	current_prolog_flag(version_data, swi(_,_,_,_)).
-yap :-
-	current_prolog_flag(version_data, yap(_,_,_,_)).
-sicstus :-
-	current_prolog_flag(version_data, sicstus(_,_,_,_,_)).
-
 have_tabling :-
-	\+ sicstus.
+	\+ current_prolog_flag(dialect, sicstus).
 
-:- if(swi).
+:- if(current_prolog_flag(dialect, swi)).
 :- use_module(library(statistics), [time/1]).
 :- use_module(library(backcomp), [current_thread/2]).
 :- use_module(library(main), [argv_options/3]).
@@ -87,10 +80,10 @@ opt_meta(speedup, 'TIMES').
 
 :- thread_local(result/3).		% Program, Time, GC
 :- else.
-:- dynamic result/3.
+:- dynamic(result/3).
 :- endif.
 
-:- if(sicstus).
+:- if(current_prolog_flag(dialect, sicstus)).
 forall(Cond, Action) :- \+ (Cond, \+ Action).
 :- endif.
 
@@ -147,18 +140,23 @@ footer(S, AvgT, AvgGC, _) :-
 	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
 
 
-:- multifile user:file_search_path/2.
-:- dynamic   user:file_search_path/2.
+compile_programs :-
+	forall(program(P, _),
+	       compile_program(P)).
+
+:- if(current_prolog_flag(dialect, gprolog)).
+compile_program(P) :-
+	atom_concat(P, '.pl', File),
+	consult(File).
+:- else.
+:- multifile(user:file_search_path/2).
+:- dynamic(user:file_search_path/2).
 
 :- (   file_search_path(bench, _)
    ->  true
    ;   prolog_load_context(directory, Dir),
        assert(user:file_search_path(bench, Dir))
    ).
-
-compile_programs :-
-	forall(program(P, _),
-	       compile_program(P)).
 
 compile_program(P) :-
 	no_singletons,
@@ -172,8 +170,9 @@ compile_program(P) :-
 	    fail
 	;   true
 	).
+:- endif.
 
-:- if(sicstus).
+:- if(current_prolog_flag(dialect, sicstus)).
 no_singletons :-
 	set_prolog_flag(single_var_warnings, off).
 :- else.
@@ -192,7 +191,7 @@ report_time(S, Program, Time, GC, csv) :-
 report_time(S, Program, Time, GC, _) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
-:- if(swi).
+:- if(current_prolog_flag(dialect, swi)).
 :- if(current_prolog_flag(wine_version, _)).
 get_performance_stats(GC, T):-
 	statistics(gctime, GC),		% SWI-Prolog under Wine
@@ -202,7 +201,7 @@ get_performance_stats(GC, T):-
 	statistics(gctime, GC),		% SWI-Prolog
 	statistics(cputime, T).
 :- endif.
-:- elif(yap).
+:- elif(current_prolog_flag(dialect, yap)).
 get_performance_stats(GC, T):-
 	statistics(garbage_collection, [_,_,TGC]),
 	statistics(cputime, [TT,_]),
@@ -305,8 +304,8 @@ program(zebra,		 576).
 % Later additions
 program(sieve,		 56).
 program(queens_clpfd,	 67) :-
-	\+ yap,				% clpfd is broken in YAP 6.5.0
-	\+ sicstus.			% Requires some porting
+	\+ current_prolog_flag(dialect, yap),      % clpfd is broken in YAP 6.5.0
+	\+ current_prolog_flag(dialect, sicstus).  % Requires some porting
 program(pingpong,	 25) :-
 	have_tabling.
 program(fib,	         266) :-
@@ -314,9 +313,9 @@ program(fib,	         266) :-
 	current_prolog_flag(bounded,false).
 program(moded_path,      37773) :-
 	have_tabling,
-	\+ yap.				% Yap lacks lattice answer subsumption
+	\+ current_prolog_flag(dialect, yap).      % Yap lacks lattice answer subsumption
 program(det,	         169) :-
-	swi.
+	current_prolog_flag(dialect, swi).
 program(eval,		 10000).
 
 
@@ -324,7 +323,7 @@ program(eval,		 10000).
 		 *	    INTERLEAVED		*
 		 *******************************/
 
-:- dynamic rni/0.
+:- dynamic(rni/0).
 
 run_interleaved(F) :-
 	compile_programs,
