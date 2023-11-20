@@ -63,7 +63,7 @@ bench :-
 	argv_options(Argv, _, Options),
 	option(speedup(N), Options, 1),
 	F is 1/N,
-	(   option(cvs(true), Options)
+	(   option(csv(true), Options)
 	->  Format = csv
 	;   Format = default
 	),
