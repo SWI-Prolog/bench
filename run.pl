@@ -148,6 +148,10 @@ compile_programs :-
 compile_program(P) :-
 	atom_concat(P, '.pl', File),
 	consult(File).
+:- elif(current_prolog_flag(dialect, ciao)).
+compile_program(P) :-
+	atom_concat(P, '.pl', File),
+	ensure_loaded(File).
 :- else.
 :- multifile(user:file_search_path/2).
 :- dynamic(user:file_search_path/2).
@@ -172,7 +176,8 @@ compile_program(P) :-
 	).
 :- endif.
 
-:- if(current_prolog_flag(dialect, sicstus)).
+:- if(( current_prolog_flag(dialect, sicstus)
+      ;	current_prolog_flag(dialect, ciao))).
 no_singletons :-
 	set_prolog_flag(single_var_warnings, off).
 :- else.

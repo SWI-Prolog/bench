@@ -22,6 +22,16 @@ added to extend the coverage of  this   benchmark  set. Good coverage is
 important to maximize the benefits of Program Guided Optimization (PGO).
 See CMAKE.md, CMAKE_BUILD_TYPE=PGO
 
+## Porting
+
+The current version runs  on  SWI-Prolog,   YAP  and  SICStus.  The most
+notable bottleneck is that we load  the   various  programs that are not
+modules  into  a  module.  These   three    systems   can  so  so  using
+load_files(M:File, []).
+
+A start has been made on  GNU-Prolog   and  Ciao,  but GNU-Prolog has no
+modules. How do we work around that? I failed   to  find a way to load a
+non-module file into a module.  Probably it exists.
 
 ## Legal status
 
