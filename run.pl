@@ -34,58 +34,15 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-% disable threading. This is needed for PGO (Profile Guided
-% Optimization)
-
-have_tabling :-
-	\+ current_prolog_flag(dialect, sicstus).
-
 :- if(current_prolog_flag(dialect, swi)).
-:- use_module(library(statistics), [time/1]).
-:- use_module(library(backcomp), [current_thread/2]).
-:- use_module(library(main), [argv_options/3]).
-:- use_module(library(option), [option/2, option/3]).
-
-:- if(current_prolog_flag(threads, true)).
-:- set_prolog_flag(gc_thread, false).
-:- (   current_thread(gc, running)
-   ->  set_prolog_gc_thread(false)
-   ;   true
-   ).
+:- include('port/swi').
+:- elif(current_prolog_flag(dialect, yap)).
+:- include('port/yap').
+:- elif(current_prolog_flag(dialect, sicstus)).
+:- include('port/sicstus').
 :- endif.
 
-:- style_check(-singleton).
-
-:- initialization(bench, main).
-
-bench :-
-	current_prolog_flag(argv, Argv),
-	argv_options(Argv, _, Options),
-	option(speedup(N), Options, 1),
-	F is 1/N,
-	(   option(csv(true), Options)
-	->  Format = csv
-	;   Format = default
-	),
-	current_output(Out),
-	run(Out, F, Format).
-
-opt_type(csv,     csv,     boolean).
-opt_type(speedup, speedup, number).
-
-opt_help(csv,     "Use CSV output format").
-opt_help(speedup, "Speedup tests (10 means 10 times faster)").
-
-opt_meta(speedup, 'TIMES').
-
-:- thread_local(result/3).		% Program, Time, GC
-:- else.
-:- dynamic(result/3).
-:- endif.
-
-:- if(current_prolog_flag(dialect, sicstus)).
-forall(Cond, Action) :- \+ (Cond, \+ Action).
-:- endif.
+:- use_module(programs).
 
 run(F) :-
 	current_output(Out),
@@ -99,8 +56,7 @@ run(S, F, Format):-
 	retractall(result(_,_,_)),
 	compile_programs,
 	header(S, Format),
-	(   program(P, N, F),
-	    current_predicate(P:top/0),	% only if really loaded
+	(   use_program(P, N, F),
 	    run_program(P, N, S, Format),
 	    fail
 	;   true
@@ -139,10 +95,24 @@ footer(S, AvgT, AvgGC, csv) :-
 footer(S, AvgT, AvgGC, _) :-
 	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
 
+use_program(Program, Times) :-
+	program(Program, Times),
+	\+ ( program_condition(Program, Cond), % = forall/2
+	     \+ system_satisfies(Cond)).
 
+use_program(P, N, F) :-
+	use_program(P, N0),
+	has_program(P),
+	N is max(1, round(N0*F)).
+
+:- if(current_prolog_flag(static, true)).
+compile_programs.
+:- multifile(has_program/1).
+:- include('prefixed/include_all').
+:- else.
 compile_programs :-
-	forall(program(P, _),
-	       compile_program(P)).
+	\+ ( use_program(P, _),		       % = forall/2.
+	     \+ compile_program(P)).
 
 :- if(current_prolog_flag(dialect, gprolog)).
 compile_program(P) :-
@@ -159,30 +129,23 @@ compile_program(P) :-
 :- (   file_search_path(bench, _)
    ->  true
    ;   prolog_load_context(directory, Dir),
-       assert(user:file_search_path(bench, Dir))
+       atom_concat(Dir, '/programs', ProgDir),
+       assert(user:file_search_path(bench, ProgDir))
    ).
 
 compile_program(P) :-
 	no_singletons,
-	(   program(P, _),
-	    absolute_file_name(bench(P), AbsFile,
-			       [ file_type(source),
-				 access(read),
-				 file_errors(fail)
-			       ]),
-	    load_files(P:AbsFile, [if(changed)]),
-	    fail
-	;   true
-	).
-:- endif.
+	absolute_file_name(bench(P), AbsFile,
+			   [ file_type(source),
+			     access(read),
+			     file_errors(fail)
+			   ]),
+	load_files(P:AbsFile, [if(changed)]).
 
-:- if(( current_prolog_flag(dialect, sicstus)
-      ;	current_prolog_flag(dialect, ciao))).
-no_singletons :-
-	set_prolog_flag(single_var_warnings, off).
-:- else.
-no_singletons :-
-	style_check(-singleton).
+has_program(P) :-
+	current_predicate(P:top/0).
+
+:- endif.
 :- endif.
 
 run_program(Program, N, S, Format) :-
@@ -196,38 +159,22 @@ report_time(S, Program, Time, GC, csv) :-
 report_time(S, Program, Time, GC, _) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
-:- if(current_prolog_flag(dialect, swi)).
-:- if(current_prolog_flag(wine_version, _)).
-get_performance_stats(GC, T):-
-	statistics(gctime, GC),		% SWI-Prolog under Wine
-	statistics(process_cputime, T).
-:- elif(statistics(gctime, _)).
-get_performance_stats(GC, T):-
-	statistics(gctime, GC),		% SWI-Prolog
-	statistics(cputime, T).
-:- endif.
-:- elif(current_prolog_flag(dialect, yap)).
-get_performance_stats(GC, T):-
-	statistics(garbage_collection, [_,_,TGC]),
-	statistics(cputime, [TT,_]),
-	GC is TGC / 1000,
-	T is TT / 1000.
-:- else.
-get_performance_stats(GC, T):-
-	statistics(garbage_collection, [_,_,TGC]),
-	statistics(runtime, [TT,_]),
-	GC is TGC / 1000,
-	T is TT / 1000.
-:- endif.
-
 ntimes(M, N, T, GC):-
+	top(M, Goal),
 	get_performance_stats(GC0, T0),
-	ntimes(M, N),
+	ntimes(Goal, N),
 	get_performance_stats(GC1, T1),
 	ntimes_dummy(N),
 	get_performance_stats(GC2, T2),
 	T  is (T1-T0) - (T2-T1),
 	GC is (GC1-GC0) - (GC2-GC1).
+
+:- if(current_prolog_flag(static, true)).
+top(M, Goal) :-
+	atom_concat(M, ':top', Goal).
+:- else.
+top(M, M:top).
+:- endif.
 
 ntimes(_, N) :- N=:=0, !.
 ntimes(M, N) :- not_not_top(M), !, N1 is N-1, ntimes(M, N1).
@@ -238,7 +185,7 @@ ntimes_dummy(N) :- not_not_dummy, !, N1 is N-1, ntimes_dummy(N1).
 not_not_top(M) :- not_top(M), !, fail.
 not_not_top(_).
 
-not_top(M) :- M:top, !, fail.
+not_top(Goal) :- call(Goal), !, fail.
 not_top(_).
 
 not_not_dummy :- not_dummy, !, fail.
@@ -248,133 +195,3 @@ not_dummy :- dummy, !, fail.
 not_dummy.
 
 dummy.
-
-%%	tune_counts
-%
-%	Write the program/2 table below, tuning all counts such that the
-%	test runs for about 1 second.
-
-tune_counts :-
-	compile_programs,
-	forall(program(P, _),
-	       (   tune_count(P, C),
-		   format('~q.~n', [program(P, C)]))).
-
-tune_count(Program, Count) :-
-	between(1, 100, I),
-	C is 1<<I,
-	ntimes(Program, C, T, _),
-	T > 0.5, !,
-	Count is round(C * (1/T)).
-
-program(P, N, F) :-
-	program(P, N0),
-	N is max(1, round(N0*F)).
-
-%!	program(?Program, ?Times)
-%
-%	Times are tuned on Nov 24,  2021 using SWI-Prolog 8.5.2 compiled
-%	using GCC-11 on AMD 3950X  to  run   for  1  second.  Tuning did
-%	__not__ use -O and used the normal ``RelWithDebInfo`` build.
-
-program(boyer,		 47).
-program(browse,		 32).
-program(chat_parser,	 128).
-program(crypt,		 3480).
-program(derive,		 279547).
-program(fast_mu,	 17354).
-program(flatten,	 33146).
-program(log10,		 1199682).
-program(meta_qsort,	 3923).
-program(mu,		 23549).
-program(nand,		 1005).
-program(nreverse,	 71340).
-program(ops8,		 744744).
-program(perfect,	 1423) :-
-	current_prolog_flag(bounded, false).
-program(poly_10,	 420).
-program(prover,		 21909).
-program(qsort,		 27207).
-program(queens_8,	 232).
-program(query,		 4192).
-program(reducer,	 567).
-program(sendmore,	 127).
-program(serialise,	 53129).
-program(simple_analyzer, 1144).
-program(tak,		 128).
-program(times10,	 704988).
-program(unify,		 8363).
-program(zebra,		 576).
-
-% Later additions
-program(sieve,		 56).
-program(queens_clpfd,	 67) :-
-	\+ current_prolog_flag(dialect, yap),      % clpfd is broken in YAP 6.5.0
-	\+ current_prolog_flag(dialect, sicstus).  % Requires some porting
-program(pingpong,	 25) :-
-	have_tabling.
-program(fib,	         266) :-
-	have_tabling,
-	current_prolog_flag(bounded,false).
-program(moded_path,      37773) :-
-	have_tabling,
-	\+ current_prolog_flag(dialect, yap).      % Yap lacks lattice answer subsumption
-program(det,	         169) :-
-	current_prolog_flag(dialect, swi).
-program(eval,		 10000).
-
-
-		 /*******************************
-		 *	    INTERLEAVED		*
-		 *******************************/
-
-:- dynamic(rni/0).
-
-run_interleaved(F) :-
-	compile_programs,
-	findall(N-P, program(P, N, F), Pairs),
-	phrase(seq_interleaved(Pairs), Sequence),
-	seq_clause(Sequence, Body),
-	retractall(rni),
-	assert((rni :- Body), Ref),
-	garbage_collect,
-	time(rni),
-	erase(Ref).
-
-seq_interleaved([]) --> !.
-seq_interleaved(Pairs) -->
-	seq_interleaved(Pairs, Rest),
-	seq_interleaved(Rest).
-
-seq_interleaved([], []) -->
-	[].
-seq_interleaved([1-P|T0], T) --> !,
-	[P],
-	seq_interleaved(T0, T).
-seq_interleaved([N-P|T0], [N1-P|T]) -->
-	[P],
-	{ N1 is N - 1 },
-	seq_interleaved(T0, T).
-
-seq_clause([], true).
-seq_clause([H|T], (\+ \+ H:top, G)) :-
-	seq_clause(T, G).
-
-run_non_interleaved(F) :-
-	compile_programs,
-	findall(N-P, program(P, N, F), Pairs),
-	phrase(seq_non_interleaved(Pairs), Sequence),
-	seq_clause(Sequence, Body),
-	assert((rni :- Body), Ref),
-	garbage_collect,
-	time(rni),
-	erase(Ref).
-
-seq_non_interleaved([]) -->
-	[].
-seq_non_interleaved([0-_|T]) --> !,
-	seq_non_interleaved(T).
-seq_non_interleaved([N-P|T]) -->
-	[P],
-	{ N1 is N - 1 },
-	seq_non_interleaved([N1-P|T]).
