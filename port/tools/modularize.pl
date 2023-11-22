@@ -43,7 +43,6 @@
 :- use_module(library(main)).
 :- use_module(library(option)).
 :- use_module(library(prolog_code)).
-:- use_module(library(readutil)).
 :- use_module(library(terms)).
 
 /** <module> Modularize benchmarks
@@ -59,13 +58,17 @@ main(Argv) :-
     modularize_files(Files, [argv(Argv)|Options]).
 
 opt_type(prefix,      prefix,      atom).
+opt_type(file_prefix, file_prefix, atom).
 opt_type(dir,         dir,         atom).
 opt_type(has_program, has_program, boolean).
+opt_type(multifile,   multifile,   boolean).
 opt_type(include_all, include_all, file).
 
 opt_help(prefix,      "Prefix to use rather than `<file>:`").
+opt_help(file_prefix, "Rename all files by adding a prefix").
 opt_help(dir,         "Directory for results").
 opt_help(has_program, "Add has_program/1 multifile clause").
+opt_help(multifile,   "Declare has_program/1 multifile in each file").
 opt_help(include_all, "Generate file to include add").
 
 %!  modularize_files(+Files, +Options) is det.
@@ -83,7 +86,8 @@ modularize(Options, File) :-
     (   option(dir(Dir), Options)
     ->  ensure_directory(Dir),
         file_base_name(File, Base),
-        directory_file_path(Dir, Base, OutFile),
+        prefix_file_name(Base, OutBase, Options),
+        directory_file_path(Dir, OutBase, OutFile),
         setup_call_cleanup(
             open(OutFile, write, Out),
             with_output_to(Out,
@@ -96,6 +100,10 @@ modularize(Options, File) :-
 file_program(File, Program) :-
     file_name_extension(Plain, _, File),
     file_base_name(Plain, Program).
+
+prefix_file_name(Name, PrefixedName, Options) :-
+    option(file_prefix(Prefix), Options, ''),
+    atom_concat(Prefix, Name, PrefixedName).
 
 add_header(File, Options) :-
     option(argv(Argv), Options, []),
@@ -118,12 +126,24 @@ modularize_file(File, Prefix, Options) :-
         memberchk(top/0, Preds)
     ->  format('% Make the fact that we have this program public.~n~n'),
         file_program(File, Program),
-        format(':- multifile(has_program/1).~n'),
-        portray_clause(has_program(Program)),
+        (   option(multifile(true), Options)
+        ->  my_portray_clause((:- multifile(has_program/1)))
+        ;   true
+        ),
+        my_portray_clause(has_program(Program)),
         nl
     ;   true
     ),
-    maplist(portray_clause, TermsOut).
+    maplist(my_portray_clause, TermsOut).
+
+my_portray_clause((:- dynamic(Terms))) =>
+    format(':- dynamic((~q)).~n', [Terms]).
+my_portray_clause((:- discontiguous(Terms))) =>
+    format(':- discontiguous((~q)).~n', [Terms]).
+my_portray_clause((:- multifile(Terms))) =>
+    format(':- multifile((~q)).~n', [Terms]).
+my_portray_clause(Term) =>
+    portray_clause(Term).
 
 read_source_file(File, Terms) :-
     style_check(-singleton),
@@ -199,11 +219,16 @@ add_include_all(Files, Options) :-
     directory_file_path(Dir, InclFile, File),
     setup_call_cleanup(
         open(File, write, Out),
-        add_includes(Out, Files),
+        add_includes(Options, Out, Files),
         close(Out)).
 add_include_all(_, _).
 
-add_includes(Out, Files) :-
+add_includes(Options, Out, Files) :-
+    (   option(has_program(true), Options, true),
+        option(multifile(false), Options, false)
+    ->  format(Out, ':- discontiguous(has_program/1).~n~n', [])
+    ;   true
+    ),
     maplist(add_include(Out), Files).
 
 add_include(Out, File) :-

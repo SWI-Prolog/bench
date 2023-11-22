@@ -102,7 +102,7 @@ init_state(5, 5, 8, [		% 2 bit full adder
 			[4,5,6,7,12,13,14,15,20,21,22,23,28,29,30,31],
 			[0,1,2,3,8,9,10,11,16,17,18,19,24,25,26,27],
 			[], [], [], [], []),
-		function(1, 		% A1 input
+		function(1,		% A1 input
 			[2,3,6,7,10,11,14,15,18,19,22,23,26,27,30,31],
 			[0,1,4,5,8,9,12,13,16,17,20,21,24,25,28,29],
 			[], [], [], [], []),
@@ -154,7 +154,7 @@ select_vector([Gk|Gks], NumVars, NumGs, Gs,
 		GjIn, Vin, TypeIn, Nin, Gj, V, Type, N),
 	select_vector(Gks, NumVars, NumGs, Gs,
 		Gj, V, Type, N, GjOut, Vout, TypeOut, Nout).
-	
+
 % loop over vectors
 select_vector([], _, _, _, _, Gj, V, Type, N, Gj, V, Type, N).
 select_vector([V|Vs], Gk, NumVars, NumGs, Gs,
@@ -293,7 +293,7 @@ cover_vector(NumVars, NumGsIn, GsIn, Gj, Vector, NumGsOut, GsOut) :-
 	vector_types(Type),
 	cover_vector(Type, IPs, CIs, Gj, Vector, NumVars, NumGsIn, GsIn,
 		NumGsOut, GsOut).
-	
+
 vector_types(var).
 vector_types(exp).
 vector_types(fcn).
@@ -457,7 +457,7 @@ new_function_CIs(GsIn, function(L,Tl,Fl,_,IPl,ISl,Pl,Sl), NumVars,
 		[GlOut|GsOut], GlOut) :-
 	new_function_CIs(GsIn, L, Fl, NumVars, GsOut, [], CIlo),
 	GlOut = function(L,Tl,Fl,CIlo,IPl,ISl,Pl,Sl).
-	
+
 new_function_CIs([], _, _, _, [], CIl, CIl).
 new_function_CIs([function(K,Tk,Fk,CIk,IPk,ISk,Pk,Sk)|GsIn], L, Fl, NumVars,
 		[function(K,Tk,Fk,CIko,IPk,ISk,Pk,Sk)|GsOut], CIlIn, CIlOut) :-
@@ -487,12 +487,14 @@ update_bounds(_, NumGs, _) :-
 	set(bound, NumGs).
 
 % set and access for systems that don't support them
+:- dynamic
+	state_/2.
 set(N, A) :-
-	(recorded(N, _, Ref) -> erase(Ref) ; true),
-	recorda(N, A, _).
+	(retract(state_(N, _)) -> true ; true),
+	asserta(state_(N, A)).
 
 access(N, A) :-
-	recorded(N, A, _).
+	state_(N, A).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Output predicates:

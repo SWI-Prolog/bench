@@ -1,9 +1,3 @@
-:- module(programs,
-          [ program/2,                          % ?Program, ?Times
-            program_condition/2,
-            system_satisfies/1
-          ]).
-
 %!	program(?Program, ?Times)
 %
 %	Times are tuned on Nov 24,  2021 using SWI-Prolog 8.5.2 compiled

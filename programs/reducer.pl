@@ -9,9 +9,9 @@
 
 % Uses write/1, compare/3, functor/3, arg/3.
 top :-
-	try(fac(3), _ans1),
+	try(fac(3), _Ans1),
 %	write(_ans1), nl,
-	try(quick([3,1,2]), _ans2).
+	try(quick([3,1,2]), _Ans2).
 %	write(_ans2), nl.
 
 try(_inpexpr, _anslist) :-
@@ -26,7 +26,11 @@ end(X) :- atom(X), !.
 end(X) :- X == [].
 
 list_functor_name(Name) :-
-	functor([_|_], Name, _).
+    (   atom(Name)
+    ->  functor([_|_], Name, _)
+    ;   var(Name)
+    ->  functor([_|_], Name, _)
+    ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

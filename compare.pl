@@ -46,39 +46,52 @@
 :- use_module(library(dcg/basics)).
 :- use_module(library(error)).
 
+:- meta_predicate
+    progress(0, +, +, +).
+
 /** <module> Compare multiple Prolog systems
 */
 
 :- initialization(main, main).
 
 main(Argv) :-
-    argv_options(Argv, Pos, Options),
-    (   Pos == []
-    ->  findall(S, system(S), Systems)
-    ;   Systems = Pos
-    ),
+    argv_options(Argv, Systems, Options),
     bench(Systems, Options).
 
-bench(Systems, Options) :-
+bench(_Systems, Options) :-
     option(list(true), Options),
     !,
-    maplist(list, Systems).
+    list_systems.
+bench([], _Options) :-
+    !,
+    argv_usage(debug).
 bench(Systems, Options) :-
     maplist(known_system(Options), Systems),
     maplist(prepare_system(Options), Systems),
     maplist(bench_system(Options), Systems, CSVFiles),
-    csv_join('all.csv', CSVFiles),
-    plot('all.csv', Systems, 'bench.svg').
+    csv_file(all, CSVOut, Options),
+    csv_join(CSVOut, CSVFiles, Systems),
+    option(output(OutFile), Options, 'bench.svg'),
+    plot(CSVOut, Systems, OutFile, Options).
 
-opt_type(speedup, speedup, number).
-opt_type(verbose, verbose, boolean).
-opt_type(v,       verbose, boolean).
-opt_type(list,    list,    boolean).
-opt_type(l,       list,    boolean).
+opt_type(speedup,  speedup,  number).
+opt_type(s,        speedup,  number).
+opt_type(verbose,  verbose,  boolean).
+opt_type(v,        verbose,  boolean).
+opt_type(quiet,    quiet,    boolean).
+opt_type(q,        quiet,    boolean).
+opt_type(list,     list,     boolean).
+opt_type(l,        list,     boolean).
+opt_type(output,   output,   file(write)).
+opt_type(o,        output,   file(write)).
+opt_type(tmp,      data_dir, directory).
 
-opt_help(speedup, "Run tests N times faster").
-opt_help(verbose, "Make stderr of process visible").
-opt_help(list,    "List supported Prolog systems").
+opt_help(speedup,     "Run tests N times faster").
+opt_help(verbose,     "Make stderr of process visible").
+opt_help(quiet,       "No progress messages").
+opt_help(list,        "List supported Prolog systems").
+opt_help(output,      "File for (SVG) final chart (default `bench.svg`)").
+opt_help(data_dir,    "Directory for intermediate files (default `data`)").
 opt_help(help(usage), " [option ...] [system ...]").
 
 opt_meta(speedup, 'SPEEDUP').
@@ -91,40 +104,54 @@ known_system(_, System) :-
 
 
 system(Sys) :-
-    clause(system(Sys, _Label, _Exe, _Speedup, _Argv, _Input), _).
+    clause(system(Sys, _Label, _Exe, _Speedup, _Argv, _Opts, _Input), _).
 
 system_property(Sys, exe(Exe)) =>
-    clause(system(Sys, _Label, Exe, _Speedup, _Argv, _Input), _).
+    clause(system(Sys, _Label, Exe, _Speedup, _Argv, _Opts, _Input), _).
 system_property(Sys, label(Label)) =>
-    clause(system(Sys, Label0, _Exe, _Speedup, _Argv, _Input), _),
+    clause(system(Sys, Label0, _Exe, _Speedup, _Argv, _Opts, _Input), _),
     prolog_version(Sys, Version),
     interpolate_string(Label0, Label, ['Version'=Version], []).
 
-%!  system(+Id, -Label, -Exe, +Speedup, -Argv, -Script) is det.
+%!  system(+Id, -Label, -Exe, +Speedup, -Argv, -Options, -Script) is det.
 
 system(swi,
        'SWI-Prolog (-O,PGO) {Version}',
        path(swipl),
        Speedup,
        ['-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
        "").
 system('swi-no-pgo',
        'SWI-Prolog (-O,no PGO) {Version}',
        '../linux/src/swipl',
        Speedup,
        ['-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
        "").
 system('swi-no-O',
        'SWI-Prolog (PGO), {Version}',
        path(swipl),
        Speedup,
        ['run.pl', '--csv', '--speedup', Speedup],
+       [],
        "").
+system(gprolog,
+       'GNU-Prolog {Version}',
+       path(gprolog),
+       Speedup,
+       ['--quiet', '--consult-file', 'port/run/gprolog.pl',
+        '--entry-goal', Goal, '--entry-goal', halt],
+       [],
+       "") :-
+    Factor is 1.0/Speedup,
+    format(string(Goal), '~q', [run(Factor)]).
 system(yap,
        'YAP {Version}',
        path(yap),
        Speedup,
        ['-l', 'run.pl', '-g', Goal],
+       [],
        "") :-
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [(run(Factor,csv),halt)]).
@@ -133,6 +160,7 @@ system(sicstus,
        path(sicstus),
        Speedup,
        ['-l', 'run.pl'],
+       [],
        Script
       ) :-
     Factor is 1.0/Speedup,
@@ -145,15 +173,44 @@ system(scryer,
        path('scryer-prolog'),
        Speedup,
        ['port/run/scryer.pl', '-g', Goal, '-g', halt],
+       [],
        ""
       ) :-
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [run(Factor)]).
+system(xsb,
+       'XSB {Version}',
+       path('xsb'),
+       Speedup,
+       ['--nobanner', '--quietload', '--noprompt'],
+       [],
+       Script
+      ) :-
+    Factor is 1.0/Speedup,
+    Script = {|string(Factor)||
+              | add_lib_dir('port/programs/xsb').
+              | ['port/run/xsb'].
+              | run({Factor}).
+              |}.
+system(trealla,
+       'Trealla Prolog {Version}',
+       path(tpl),
+       Speedup,
+       [ '-g', Goal, '-l', 'include_all.pl' ],
+       [ cwd('port/programs/trealla') ],
+       "") :-
+    Factor is 1.0/Speedup,
+    format(string(Goal), '~q', [(run(Factor),halt)]).
 
 bench_system(Options, System, CSVOut) :-
-    file_name_extension(System, csv, CSVOut),
+    progress(bench_system_(Options, System, CSVOut),
+             "Running benchmarks for \"~w\"", [System],
+             Options).
+
+bench_system_(Options, System, CSVOut) :-
+    csv_file(System, CSVOut, Options),
     option(speedup(Speedup), Options, 1),
-    system(System, _Label, Exe, Speedup, Argv, Script),
+    system(System, _Label, Exe, Speedup, Argv, CreaeteOpts, Script),
     (   Script == ""
     ->  Stdin = std
     ;   Stdin = pipe(In)
@@ -167,6 +224,7 @@ bench_system(Options, System, CSVOut) :-
                      stdout(pipe(Out)),
                      stderr(Stderr),
                      process(PID)
+                   | CreaeteOpts
                    ]),
     (   var(In)
     ->  true
@@ -191,9 +249,21 @@ to_file(File, Stream) :-
     call_cleanup(
         setup_call_cleanup(
             open(File, write, Out),
-            copy_stream_data(Stream, Out),
+            copy_lines(Stream, Out),
             close(Out)),
         close(Stream)).
+
+copy_lines(In, Out) :-
+    read_line_to_string(In, Line),
+    (   Line == end_of_file
+    ->  true
+    ;   mask_line(Line)
+    ->  copy_lines(In, Out)
+    ;   format(Out, '~s~n', [Line]),
+        copy_lines(In, Out)
+    ).
+
+mask_line("yes").                       % XSB cannot suppress this
 
 report_failure(exit(0), _, _) :-
     !.
@@ -201,9 +271,18 @@ report_failure(Status, System, ErrorString) :-
     print_message(error, bench_failed(System, Status, ErrorString)),
     fail.
 
+csv_file(System, File, Options) :-
+    option(data_dir(Dir), Options, 'data'),
+    ensure_directory(Dir),
+    file_name_extension(System, csv, CSVFile),
+    directory_file_path(Dir, CSVFile, File).
+
 		 /*******************************
 		 *            VERSION		*
 		 *******************************/
+
+list_systems :-
+    forall(system(System), list(System)).
 
 list(System) :-
     (   prolog_version(System, Version)
@@ -212,8 +291,13 @@ list(System) :-
     ),
     format('~w~t~w~30|~n', [System, Version]).
 
+%!  prolog_version(+System, -Version) is semidet.
+%
+%   Try to get the version of the system by running it with `--version`.
+%   May need specialized implementations for new Prolog systems
+
 prolog_version(System, Version) :-
-    system(System, _Label, Exe, 1, _Argv, _Script),
+    system(System, _Label, Exe, 1, _Argv, _Opts, _Script),
     process_create(Exe, ['--version'],
                    [ stdin(null),
                      stdout(pipe(Out)),
@@ -247,13 +331,17 @@ version(Version) -->
 		 *            PREPARE		*
 		 *******************************/
 
-prepare_system(_Options, scryer) :-
-    exists_file('port/programs/scryer/include_all.pl'),
+prepare_system(Options, System) :-
+    format(string(File), 'port/programs/~w/include_all.pl', [System]),
+    exists_file(File),
+    progress("Using existing prepared files for \"~w\"", System, Options),
     !.
-prepare_system(Options, scryer) :-
+prepare_system(Options, System) :-
+    exists_source(port/prepare/System),
     !,
-    use_module(port/prepare/scryer),
-    scryer:prepare(Options).
+    use_module(port/prepare/System),
+    progress(System:prepare(Options),
+             "Preparing scripts for \"~w\"", System, Options).
 prepare_system(_, _).
 
 
@@ -261,6 +349,11 @@ prepare_system(_, _).
 		 /*******************************
 		 *            JOIN CSV		*
 		 *******************************/
+
+csv_join(Out, Files, Options) :-
+    progress(csv_join(Out, Files),
+             "Joining CSV data into file \"~w\"", [Out],
+             Options).
 
 csv_join(Out, Files) :-
     maplist(system, Files, Systems),
@@ -299,7 +392,12 @@ system_time(Program, Pairs, System, Time) :-
 		 *             PLOT		*
 		 *******************************/
 
-plot(Input, Systems, Output) :-
+plot(Input, Systems, Output, Options) :-
+    progress(plot_(Input, Systems, Output, Options),
+             "Generating chart using gnuplot (~w)", [Output],
+             Options).
+
+plot_(Input, Systems, Output, _Options) :-
     length(Systems, NSys),
     MaxCol is NSys + 1,
     phrase(ti_cols(3, MaxCol), String),
@@ -344,6 +442,30 @@ ti_cols(_,_) -->
 
 
 		 /*******************************
+		 *            PROGRESS		*
+		 *******************************/
+
+progress(Fmt, Args, Options) :-
+    option(quiet(false), Options, false),
+    !,
+    print_message(informational, format(Fmt, Args)).
+progress(_,_,_).
+
+progress(Goal, Fmt, Args, Options) :-
+    option(quiet(false), Options, false),
+    !,
+    print_message(informational, progress_start(Fmt, Args)),
+    (   catch(call_time(Goal, Time), Error, true)
+    ->  (   var(Error)
+        ->  print_message(informational, progress_end(true(Time)))
+        ;   print_message(error, progress_end(Error)),
+            throw(Error)
+        )
+    ;   print_message(error, progress_end(false)),
+        fail
+    ).
+
+		 /*******************************
 		 *            MESSAGES		*
 		 *******************************/
 
@@ -353,3 +475,12 @@ prolog:message(bench_failed(System, Status, ErrorString)) -->
     [ 'Benchmark run for "~w" failed with ~p:'-[System, Status], nl,
       '~w'-[ErrorString]
     ].
+prolog:message(progress_start(Fmt, Args)) -->
+    [ Fmt-Args, ' ...', flush ].
+prolog:message(progress_end(true(Time))) -->
+    [ at_same_line, ' done (~1f sec)'-Time.wall ].
+prolog:message(progress_end(false)) -->
+    [ at_same_line, ' FAILED' ].
+prolog:message(progress_end(Error)) -->
+    [ at_same_line, ' ERROR:', nl ],
+    prolog:translate_message(Error).

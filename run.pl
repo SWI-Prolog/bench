@@ -42,7 +42,7 @@
 :- include('port/sicstus').
 :- endif.
 
-:- use_module(programs).
+:- ensure_loaded(programs).
 
 run(F) :-
 	current_output(Out),

@@ -1,3 +1,4 @@
 *.csv
 *.svg
-port/programs/scryer
+port/programs/*
+*.xwam

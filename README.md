@@ -24,14 +24,51 @@ See CMAKE.md, CMAKE_BUILD_TYPE=PGO
 
 ## Porting
 
-The current version runs  on  SWI-Prolog,   YAP  and  SICStus.  The most
-notable bottleneck is that we load  the   various  programs that are not
-modules  into  a  module.  These   three    systems   can  so  so  using
-load_files(M:File, []).
+The current  version runs on  SWI-Prolog, YAP, SICStus  Prolog, Scryer
+Prolog  and  GNU-Prolog.   There  are   two  routes  for  running  the
+benchmarks.
 
-A start has been made on  GNU-Prolog   and  Ciao,  but GNU-Prolog has no
-modules. How do we work around that? I failed   to  find a way to load a
-non-module file into a module.  Probably it exists.
+  - For  systems with a  Quintus-derived module systems,  `run.pl` can
+    usually  deal with  loading and  configuring the  benchmark suite.
+    Currently this supports SWI-Prolog, YAP and SICStus Prolog.
+
+  - For  other  systems we  use `tools/modularize.pl`  to qualify  all
+    local predicates with  their file (base name), such  that they can
+    be   loaded    into   the   same   Prolog    instance.    We   add
+    `ports/prepare/<system>.pl` to call the modularization, test which
+    benchmarks can  be loaded  and executed on  the target  system and
+    finally generate  a file  that includes all  tests and  provides a
+    predicate has_program/1 that provides  all programs that have been
+    loaded.      The     prepared     system     is     created     in
+    `port/programs/<system>`
+
+	Next,  we provide  port/run/<system>.pl that  loads the  above and
+	provides `run(Factor)`  which runs  all benchmarks and  writes the
+	CSV output.
+
+When using the second route, proceeds as follows.  First, run
+
+    swipl port/tools/modularize.pl --dir=port/programs/<system> \
+	--include-all=include_all.pl programs/*.pl
+
+Next, you should  have `port/programs/<system>/include_all.pl`.  Tweak
+to  get  this running  on  the  target  system  such that  e.g.,  this
+benchmark runs:
+
+   ?- 'qsort:top'.
+
+After loading the file, has_program/1  should succeed for every Prolog
+that can  be loaded.  Once you  know how to  do that, copy one  of the
+`port/prepare/<system>.pl` files.  Most contain code that
+
+  - Call modularize.pl correctly to get the proper programs
+  - Evaluate whether a benchmark can be loaded.
+  - Generate `include_all.pl` to only include the benchmarks we
+    can run.
+
+Now,  copy   and  edit   `port/run/<system>.pl`  and   finally  extend
+`compare.pl` to include the new system.
+
 
 ## Legal status
 
@@ -76,5 +113,3 @@ FILE.
   - tak.pl
   - unify.pl
   - zebra.pl
-
-
