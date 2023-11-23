@@ -114,10 +114,9 @@ redistribution.
 
 Source packages that wish to be sure   to  only distribute material that
 complies with open source standards  may   remove  these files using the
-command below. MAKE SURE NOT TO  ADD   ANY  OTHER  MARKDOWN LIST TO THIS
-FILE.
+command below.
 
-    rm $(grep '^\s*-' README.md | awk '{print $2}')
+    rm $(grep '^\s*- [a-z0-9_]*\.pl' README.md | awk '{print $2}')
 
   - boyer.pl
   - browse.pl
