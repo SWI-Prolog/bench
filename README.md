@@ -22,11 +22,38 @@ added to extend the coverage of  this   benchmark  set. Good coverage is
 important to maximize the benefits of Program Guided Optimization (PGO).
 See CMAKE.md, CMAKE_BUILD_TYPE=PGO
 
+## Running
+
+To run  the benchmark  suite with SWI-Prolog,  simply run  the command
+below.  The benchmarks  are calibrated to take about 1  second each on
+SWI-Prolog 8.5.2.   You can  speedup the run  using `--speedup=Times`,
+e.g.
+
+    swipl run.pl --speedup=10
+
+To create a clustered histogram comparing multiple systems run e.g.
+
+    swipl compare.pl --speedup=10 swi gprolog
+
+Any number of  systems may be specified.  Use `wipl  compare.pl -l` to
+see the available  systems and the _Porting_ section  below for adding
+systems.  The  results are  saved into  `bench.svg`.  Use  the command
+below for other options.
+
+   swipl compare.pl --help
+
+
+
 ## Porting
 
 The current  version runs on  SWI-Prolog, YAP, SICStus  Prolog, Scryer
-Prolog  and  GNU-Prolog.   There  are   two  routes  for  running  the
-benchmarks.
+Prolog  and GNU-Prolog,  XSB and  Trealla Prolog.   To get  the actual
+list,  run  this command  to  get  the  system identifiers  and  their
+version.
+
+    swipl compare.pl -l
+
+There are two routes for running the benchmarks.
 
   - For  systems with a  Quintus-derived module systems,  `run.pl` can
     usually  deal with  loading and  configuring the  benchmark suite.
