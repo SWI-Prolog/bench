@@ -76,13 +76,13 @@ There are two routes for running the benchmarks.
 When using the second route, proceeds as follows.  First, run
 
     swipl port/tools/modularize.pl --dir=port/programs/<system> \
-	--include-all=include_all.pl programs/*.pl
+		  --include-all=include_all.pl programs/*.pl
 
 Next, you should  have `port/programs/<system>/include_all.pl`.  Tweak
 to  get  this running  on  the  target  system  such that  e.g.,  this
 benchmark runs:
 
-   ?- 'qsort:top'.
+    ?- 'qsort:top'.
 
 After loading the file, has_program/1  should succeed for every Prolog
 that can  be loaded.  Once you  know how to  do that, copy one  of the
