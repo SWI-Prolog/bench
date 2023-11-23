@@ -40,7 +40,7 @@ see the available  systems and the _Porting_ section  below for adding
 systems.  The  results are  saved into  `bench.svg`.  Use  the command
 below for other options.
 
-   swipl compare.pl --help
+    swipl compare.pl --help
 
 
 
@@ -69,7 +69,7 @@ There are two routes for running the benchmarks.
     loaded.      The     prepared     system     is     created     in
     `port/programs/<system>`
 
-	Next,  we provide  port/run/<system>.pl that  loads the  above and
+	Next, we  provide `port/run/<system>.pl` that loads  the above and
 	provides `run(Factor)`  which runs  all benchmarks and  writes the
 	CSV output.
 
