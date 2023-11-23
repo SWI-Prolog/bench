@@ -3,7 +3,7 @@
 %		from Hofstadter's "Godel, Escher, Bach" (pp. 33-6).
 %		written by Bruce Holmer
 %
-%	To find a derivation type, for example: 
+%	To find a derivation type, for example:
 %		theorem([m,u,i,i,u]).
 %	Also try 'miiiii' (uses all rules) and 'muui' (requires 11 steps).
 %	Note that it can be shown that (# of i's) cannot be a multiple
@@ -28,18 +28,26 @@ top :- theorem([m,u,i,i,u]).
 % First break goal atom into a list of characters,
 % find the derivation, and then print the results.
 theorem(G) :-
-	length(G, GL1),
+	list_to_length(G, GL1),
 	GL is GL1 - 1,
-	derive([m,i], G, 1, GL, Derivation, 0).
+	derive([m,i], G, 1, GL, _Derivation, 0).
 	% nl, print_results([rule(0,[m,i])|Derivation], 0).
+
+list_to_length(List, Len) :-
+    list_to_length(List, 0, Len).
+list_to_length([], L, L) :-
+    !.
+list_to_length([_|T], L0, L) :-
+    L1 is L0+1,
+    list_to_length(T, L1, L).
 
 % derive(StartString, GoalString, StartStringLength, GoalStringLength,
 %		Derivation, InitBound).
-derive(S, G, SL, GL, D, B) :- 
+derive(S, G, SL, GL, D, B) :-
 	% B1 is B + 1,
 	% write('depth '), write(B1), nl,
 	derive2(S, G, SL, GL, 1, D, B).
-derive(S, G, SL, GL, D, B) :- 
+derive(S, G, SL, GL, D, B) :-
 	B1 is B + 1,
 	derive(S, G, SL, GL, D, B1).
 
@@ -60,13 +68,13 @@ rule([m|T1], [m|T2], L1, L2, Pin, Pout, N) :-
 %		ScanPtrIn, ScanPtrOut, StrPosition, PreviousChar,
 %		RuleNumber, DiffList, DiffLink).
 %   The difference list is used for doing a list concatenate in rule 2.
-rule([i],       [i,u],  L1, L2, Pin, Pout, Pos, _, 1, _, _) :- 
+rule([i],       [i,u],  L1, L2, Pin, Pout, Pos, _, 1, _, _) :-
 							Pos >= Pin,
 							Pout is Pos - 2,
 							L2 is L1 + 1.
 rule([],        L,      L1, L2, _,   1,    _,   _, 2, L, []) :-
 							L2 is L1 + L1.
-rule([i,i,i|T], [u|T],  L1, L2, Pin, Pout, Pos, _, 3, _, _) :- 
+rule([i,i,i|T], [u|T],  L1, L2, Pin, Pout, Pos, _, 3, _, _) :-
 							Pos >= Pin,
 							Pout is Pos - 1,
 							L2 is L1 - 2.
@@ -80,13 +88,13 @@ rule([H|T1],    [H|T2], L1, L2, Pin, Pout, Pos, _, N, L, [H|X]) :-
 
 % print_results([], _).
 % print_results([rule(N,G)|T], M) :-
-% 	M1 is M + 1,
-% 	write(M1), write('  '), print_rule(N), write(G), nl,
-% 	print_results(T, M1).
-% 
+%	M1 is M + 1,
+%	write(M1), write('  '), print_rule(N), write(G), nl,
+%	print_results(T, M1).
+%
 % print_rule(0) :- write('axiom    ').
 % print_rule(N) :- N =\= 0, write('rule '), write(N), write('   ').
-% 
+%
 lower_bound(N, M, 1) :- N < M.
 lower_bound(N, N, 2).
 lower_bound(N, M, B) :-
