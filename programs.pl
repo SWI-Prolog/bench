@@ -50,7 +50,6 @@ program(eval,		 10000).
 
 program_condition(perfect,      unbounded).
 program_condition(queens_clpfd, not(yap)).      % clpfd is broken in YAP 6.5.0
-program_condition(queens_clpfd, not(sicstus)).  % Requires some porting
 program_condition(pingpong,     tabling).
 program_condition(fib,          tabling).
 program_condition(fib,          unbounded).

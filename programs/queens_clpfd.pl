@@ -5,6 +5,7 @@ top :- n_queens(50,_), fail.
 top.
 
 :- use_module(library(clpfd)).
+:- op(700, xfx, ins).
 
 n_queens(N, Qs) :-
 	length(Qs, N),
@@ -22,3 +23,10 @@ safe_queens([Q|Qs], Q0, D0) :-
 	abs(Q0 - Q) #\= D0,
 	D1 #= D0 + 1,
 	safe_queens(Qs, Q0, D1).
+
+:- if(\+current_predicate(ins/2)).
+ins([], _).
+ins([H|T], D) :-
+	H in D,
+	ins(T, D).
+:- endif.
