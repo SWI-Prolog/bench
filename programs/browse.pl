@@ -1,5 +1,5 @@
 % generated: 19 June 1990
-% option(s): 
+% option(s):
 %
 %   browse
 %
@@ -7,7 +7,7 @@
 %
 %   (modified January 1987 by Herve' Touati)
 
-top :- 
+top :-
     init(100,10,4,
          [[a,a,a,b,b,b,b,a,a,a,a,a,b,b,a,a,a],
           [a,a,b,b,b,b,a,a,[a,a],[b,b]],
@@ -25,7 +25,7 @@ top :-
 init(N,M,Npats,Ipats,Result) :- init(N,M,M,Npats,Ipats,Result).
 
 init(0,_,_,_,_,_) :- !.
-init(N,I,M,Npats,Ipats,[Symb|Rest]) :- 
+init(N,I,M,Npats,Ipats,[Symb|Rest]) :-
     fill(I,[],L),
     get_pats(Npats,Ipats,Ppats),
     J is M - I,
@@ -35,17 +35,25 @@ init(N,I,M,Npats,Ipats,[Symb|Rest]) :-
     init(N1,I1,M,Npats,Ipats,Rest).
 
 fill(0,L,L) :- !.
-fill(N,L,[dummy([])|Rest]) :- 
+fill(N,L,[dummy([])|Rest]) :-
     N1 is N - 1,
     fill(N1,L,Rest).
 
 randomize([],[],_) :- !.
 randomize(In,[X|Out],Rand) :-
-    length(In,Lin),
+    list_to_length(In,Lin),
     Rand1 is (Rand * 17) mod 251,
     N is Rand1 mod Lin,
     split(N,In,X,In1),
     randomize(In1,Out,Rand1).
+
+list_to_length(List, Len) :-
+    list_to_length(List, 0, Len).
+list_to_length([], L, L) :-
+    !.
+list_to_length([_|T], L0, L) :-
+    L1 is L0+1,
+    list_to_length(T, L1, L).
 
 split(0,[X|Xs],X,Xs) :- !.
 split(N,[X|Xs],RemovedElt,[X|Ys]) :-
@@ -88,7 +96,7 @@ match([],[]) :- !.
 match([X|PRest],[Y|SRest]) :-
     var(Y),!,X = Y,
     match(PRest,SRest).
-match(List,[Y|Rest]) :- 
+match(List,[Y|Rest]) :-
     nonvar(Y),Y = star(X),!,
     '$concat'(X,SRest,List),
     match(SRest,Rest).
