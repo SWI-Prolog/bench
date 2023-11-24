@@ -147,6 +147,28 @@ system('swipl-no-O',
        ['run.pl', '--csv', '--speedup', Speedup],
        [],
        "").
+system('swipl-st',
+       'SWI-Prolog (no threads,-O)',
+       '../build.single-pgo/src/swipl',
+       Speedup,
+       ['-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
+       "").
+system('swipl-wasm',
+       'SWI-Prolog (WASM,-O)',
+       path(node),
+       Speedup,
+       ['../build.wasm/src/swipl.js',
+        '-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
+       "").
+system('swipl-win64',
+       'SWI-Prolog (Win64,-O)',
+       '../build.win64/src/swipl.exe',
+       Speedup,
+       [ '-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
+       "").
 system(gprolog,
        'GNU-Prolog',
        path(gprolog),
@@ -330,7 +352,8 @@ list(System) :-
 
 prolog_version(System, Version) :-
     system(System, _Label, Exe, 1, _Argv, _Opts, _Script),
-    process_create(Exe, ['--version'],
+    system_version_argv(System, VersionArgv),
+    process_create(Exe, VersionArgv,
                    [ stdin(null),
                      stdout(pipe(Out)),
                      stderr(pipe(Err))
@@ -344,6 +367,11 @@ prolog_version(System, Version) :-
         phrase(version(Version), Codes, _)
     ->  true
     ).
+
+system_version_argv('swipl-wasm',
+                    ['../build.wasm/src/swipl.js', '--version']) :- !.
+system_version_argv(_,
+                    ['--version']).
 
 version(Version) -->
     string(_),
@@ -443,8 +471,11 @@ plot_(Input, Systems, Output, Options) :-
     process_create(path(gnuplot), [],
                    [ stdin(pipe(Stdin))
                    ]),
+    Title = "Prolog benchmark suite from \c
+             https://github.com/SWI-Prolog/bench.git\\n\c
+             Times in seconds.  Less is better.",
 
-    Script = {|string(Input,Output,YMax,TiCols)||
+    Script = {|string(Title,Input,Output,YMax,TiCols)||
 set term svg
 set output "{Output}"
 
@@ -458,12 +489,12 @@ set style data histograms
 set xtics border in scale 0,0 nomirror rotate by -45 autojustify noenhanced
 set xtics norangelimit
 set xtics ()
-set title "Prolog benchmark suite from https://github.com/SWI-Prolog/bench.git"
+set title "{Title}"
 set colorbox vertical origin screen 0.9, 0.2 size screen 0.05, 0.6 front noinvert bdefault
 set yrange [0:{YMax}]
-set linetype 1 lc rgb "red"
-set linetype 2 lc rgb "green"
-set linetype 3 lc rgb "blue"
+#set linetype 1 lc rgb "red"
+#set linetype 2 lc rgb "green"
+#set linetype 3 lc rgb "blue"
 
 plot '{Input}' using 2:xtic(1) ti col{TiCols}
              |},
