@@ -9,14 +9,6 @@
 %
 %   prove arithmetic theorem
 
-go:-
-    statistics(runtime,[_,_]),
-    wff(Wff),
-    rewrite(Wff,NewWff),
-    tautology(NewWff,[],[]),
-    statistics(runtime,[_,T]),
-    write('execution time is '),write(T), write(' milliseconds').
-
 top :-
     wff(Wff),
     rewrite(Wff,NewWff),
@@ -208,9 +200,9 @@ equal(  boyer_member(A,B),
 equal(  not(P),
         if(P,f,t)
         ).
-equal(  nth(A,B),
+equal(  my_nth(A,B),
         C
-        ) :- nth(A,B,C).
+        ) :- my_nth(A,B,C).
 equal(  numberp(greatest_factor(X,Y)),
         not(and(or(zerop(Y),equal(Y,1)),
                 not(numberp(X))))
@@ -350,11 +342,9 @@ myboyer_member(X,append(A,B),or(boyer_member(X,A),boyer_member(X,B))) :- !.
 myboyer_member(X,reverse(Y),boyer_member(X,Y)) :- !.
 myboyer_member(A,intersect(B,C),and(boyer_member(A,B),boyer_member(A,C))).
 
-:- if(\+predicate_property(nth(_,_,_),_)).
-nth(zero,_,zero).
-nth([],I,if(zerop(I),[],zero)).
-nth(append(A,B),I,append(nth(A,I),nth(B,boyer_difference(I,length(A))))).
-:- endif.
+my_nth(zero,_,zero).
+my_nth([],I,if(zerop(I),[],zero)).
+my_nth(append(A,B),I,append(my_nth(A,I),my_nth(B,boyer_difference(I,length(A))))).
 
 myplus(myplus(X,Y),Z,
      myplus(X,myplus(Y,Z))) :- !.
