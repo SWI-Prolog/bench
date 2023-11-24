@@ -201,6 +201,18 @@ system(trealla,
        "") :-
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [(run(Factor),halt)]).
+system(ciao,
+       'Ciao lang {Version}',
+       path(ciaosh),
+       Speedup,
+       [ '-q' ],
+       [ ],
+       Script) :-
+    Factor is 1.0/Speedup,
+    Script = {|string(Factor)||
+              | ['port/run/ciao.pl'].
+              | run({Factor}).
+              |}.
 
 bench_system(Options, System, CSVOut) :-
     progress(bench_system_(Options, System, CSVOut),
