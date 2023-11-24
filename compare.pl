@@ -74,27 +74,34 @@ bench(Systems, Options) :-
     option(output(OutFile), Options, 'bench.svg'),
     plot(CSVOut, Systems, OutFile, Options).
 
-opt_type(speedup,  speedup,  number).
-opt_type(s,        speedup,  number).
-opt_type(verbose,  verbose,  boolean).
-opt_type(v,        verbose,  boolean).
-opt_type(quiet,    quiet,    boolean).
-opt_type(q,        quiet,    boolean).
-opt_type(list,     list,     boolean).
-opt_type(l,        list,     boolean).
-opt_type(output,   output,   file(write)).
-opt_type(o,        output,   file(write)).
-opt_type(tmp,      data_dir, directory).
+opt_type(speedup,          speedup,          number).
+opt_type(s,                speedup,          number).
+opt_type(verbose,          verbose,          boolean).
+opt_type(v,                verbose,          boolean).
+opt_type(ymax,             ymax,             number).
+opt_type(quiet,            quiet,            boolean).
+opt_type(q,                quiet,            boolean).
+opt_type(list,             list,             boolean).
+opt_type(l,                list,             boolean).
+opt_type(output,           output,           file(write)).
+opt_type(o,                output,           file(write)).
+opt_type(tmp,              data_dir,         directory).
+opt_type(prepare,          prepare,          boolean).
+opt_type(dump_plot_script, dump_plot_script, boolean).
 
-opt_help(speedup,     "Run tests N times faster").
-opt_help(verbose,     "Make stderr of process visible").
-opt_help(quiet,       "No progress messages").
-opt_help(list,        "List supported Prolog systems").
-opt_help(output,      "File for (SVG) final chart (default `bench.svg`)").
-opt_help(data_dir,    "Directory for intermediate files (default `data`)").
-opt_help(help(usage), " [option ...] [system ...]").
+opt_help(speedup,          "Run benchmarks N times faster").
+opt_help(ymax,             "Truncate Y-scale").
+opt_help(verbose,          "Make stderr of process visible").
+opt_help(quiet,            "No progress messages").
+opt_help(list,             "List supported Prolog systems").
+opt_help(output,           "File for (SVG) final chart (default `bench.svg`)").
+opt_help(data_dir,         "Directory for intermediate files (default `data`)").
+opt_help(prepare,          "Force rebuilding prepared programs").
+opt_help(dump_plot_script, "Dump the GNUplot script").
+opt_help(help(usage),      " [option ...] [system ...]").
 
 opt_meta(speedup, 'SPEEDUP').
+opt_meta(ymax, 'MAX').
 
 known_system(_Options, System) :-
     system(System),
@@ -109,35 +116,39 @@ system(Sys) :-
 system_property(Sys, exe(Exe)) =>
     clause(system(Sys, _Label, Exe, _Speedup, _Argv, _Opts, _Input), _).
 system_property(Sys, label(Label)) =>
-    clause(system(Sys, Label0, _Exe, _Speedup, _Argv, _Opts, _Input), _),
+    clause(system(Sys, Label, _Exe, _Speedup, _Argv, _Opts, _Input), _).
+system_property(Sys, version(Version)) =>
+    prolog_version(Sys, Version).
+system_property(Sys, vlabel(Label)) =>
+    system_property(Sys, label(Label0)),
     prolog_version(Sys, Version),
-    interpolate_string(Label0, Label, ['Version'=Version], []).
+    format(string(Label), '~w ~w', [Label0, Version]).
 
 %!  system(+Id, -Label, -Exe, +Speedup, -Argv, -Options, -Script) is det.
 
-system(swi,
-       'SWI-Prolog (-O,PGO) {Version}',
+system(swipl,
+       'SWI-Prolog (-O,PGO)',
        path(swipl),
        Speedup,
        ['-O', 'run.pl', '--csv', '--speedup', Speedup],
        [],
        "").
-system('swi-no-pgo',
-       'SWI-Prolog (-O,no PGO) {Version}',
+system('swipl-no-pgo',
+       'SWI-Prolog (-O,no PGO)',
        '../linux/src/swipl',
        Speedup,
        ['-O', 'run.pl', '--csv', '--speedup', Speedup],
        [],
        "").
-system('swi-no-O',
-       'SWI-Prolog (PGO), {Version}',
+system('swipl-no-O',
+       'SWI-Prolog (PGO)',
        path(swipl),
        Speedup,
        ['run.pl', '--csv', '--speedup', Speedup],
        [],
        "").
 system(gprolog,
-       'GNU-Prolog {Version}',
+       'GNU-Prolog',
        path(gprolog),
        Speedup,
        ['--quiet', '--consult-file', 'port/run/gprolog.pl',
@@ -147,7 +158,7 @@ system(gprolog,
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [run(Factor)]).
 system(yap,
-       'YAP {Version}',
+       'YAP',
        path(yap),
        Speedup,
        ['-l', 'run.pl', '-g', Goal],
@@ -156,7 +167,7 @@ system(yap,
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [(run(Factor,csv),halt)]).
 system(sicstus,
-       'SICStus {Version}',
+       'SICStus Prolog',
        path(sicstus),
        Speedup,
        ['-l', 'run.pl'],
@@ -169,7 +180,7 @@ system(sicstus,
               | halt.
               |}.
 system(scryer,
-       'Scryer Prolog {Version}',
+       'Scryer Prolog',
        path('scryer-prolog'),
        Speedup,
        ['port/run/scryer.pl', '-g', Goal, '-g', halt],
@@ -179,7 +190,7 @@ system(scryer,
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [run(Factor)]).
 system(xsb,
-       'XSB {Version}',
+       'XSB',
        path('xsb'),
        Speedup,
        ['--nobanner', '--quietload', '--noprompt'],
@@ -193,7 +204,7 @@ system(xsb,
               | run({Factor}).
               |}.
 system(trealla,
-       'Trealla Prolog {Version}',
+       'Trealla Prolog',
        path(tpl),
        Speedup,
        [ '-g', Goal, '-l', 'include_all.pl' ],
@@ -202,7 +213,7 @@ system(trealla,
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [(run(Factor),halt)]).
 system(ciao,
-       'Ciao lang {Version}',
+       'Ciao Lang',
        path(ciaosh),
        Speedup,
        [ '-q' ],
@@ -294,14 +305,23 @@ csv_file(System, File, Options) :-
 		 *******************************/
 
 list_systems :-
+    format('~`\u2015t~*|~n', [50]),
+    ansi_format(bold, '~w~t~15|~w~n', ['Identifier', 'Description']),
+    format('~`\u2015t~*|~n', [50]),
     forall(system(System), list(System)).
 
 list(System) :-
-    (   prolog_version(System, Version)
-    ->  true
-    ;   Version = '?'
-    ),
-    format('~w~t~w~30|~n', [System, Version]).
+    (   catch(system_property(System, version(Version)),
+              error(existence_error(source_sink, path(_)),_),
+              fail)
+    ->  system_property(System, label(Label)),
+        format('~w~t~15|~w~t~w~50|~n', [System, Label, Version])
+    ;   system_property(System, exe(Exe)),
+        (   Exe = path(Prog)
+        ->  ansi_format(warning, '~w~t~15|No "~w" in PATH~n', [System, Prog])
+        ;   ansi_format(warning, '~w~t~15|No executable ~q~n', [System, Exe])
+        )
+    ).
 
 %!  prolog_version(+System, -Version) is semidet.
 %
@@ -344,14 +364,19 @@ version(Version) -->
 		 *******************************/
 
 prepare_system(Options, System) :-
-    format(string(File), 'port/programs/~w/include_all.pl', [System]),
-    exists_file(File),
-    progress("Using existing prepared files for \"~w\"", System, Options),
-    !.
+    directory_file_path('port/programs', System, Dir),
+    directory_file_path(Dir, 'include_all.pl', InclFile),
+    exists_file(InclFile),
+    (   option(prepare(true), Options)
+    ->  delete_directory_contents(Dir),
+        fail
+    ;   progress("Using existing prepared files for \"~w\"", System, Options),
+        !
+    ).
 prepare_system(Options, System) :-
     exists_source(port/prepare/System),
     !,
-    use_module(port/prepare/System),
+    use_module(port/prepare/System, []),
     progress(System:prepare(Options),
              "Preparing scripts for \"~w\"", System, Options).
 prepare_system(_, _).
@@ -387,7 +412,7 @@ program(Data, P) :-
     P \== program.
 
 system_label(System, Label) :-
-    system_property(System, label(Label)).
+    system_property(System, vlabel(Label)).
 
 make_row(Systems, Pairs, Program, Row) :-
     maplist(system_time(Program, Pairs), Systems, SysTimes),
@@ -409,7 +434,8 @@ plot(Input, Systems, Output, Options) :-
              "Generating chart using gnuplot (~w)", [Output],
              Options).
 
-plot_(Input, Systems, Output, _Options) :-
+plot_(Input, Systems, Output, Options) :-
+    option(ymax(YMax), Options, '*'),
     length(Systems, NSys),
     MaxCol is NSys + 1,
     phrase(ti_cols(3, MaxCol), String),
@@ -417,13 +443,14 @@ plot_(Input, Systems, Output, _Options) :-
     process_create(path(gnuplot), [],
                    [ stdin(pipe(Stdin))
                    ]),
-    Script = {|string(Input,Output,TiCols)||
+
+    Script = {|string(Input,Output,YMax,TiCols)||
 set term svg
 set output "{Output}"
 
 set datafile separator '|'
 set boxwidth 0.9 absolute
-set style fill solid 1.00 border lt -1
+set style fill solid 1.00 noborder
 set key fixed right top vertical Right noreverse noenhanced autotitle nobox
 set style histogram clustered gap 2 title textcolor lt -1
 set datafile missing '-'
@@ -433,13 +460,17 @@ set xtics norangelimit
 set xtics ()
 set title "Prolog benchmark suite from https://github.com/SWI-Prolog/bench.git"
 set colorbox vertical origin screen 0.9, 0.2 size screen 0.05, 0.6 front noinvert bdefault
-set yrange [0:*]
+set yrange [0:{YMax}]
 set linetype 1 lc rgb "red"
 set linetype 2 lc rgb "green"
 set linetype 3 lc rgb "blue"
 
 plot '{Input}' using 2:xtic(1) ti col{TiCols}
              |},
+    (   option(dump_plot_script(true), Options)
+    ->  writeln(Script)
+    ;   true
+    ),
     call_cleanup(write(Stdin, Script),
                  close(Stdin)).
 

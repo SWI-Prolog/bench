@@ -46,10 +46,10 @@ below for other options.
 
 ## Porting
 
-The current  version runs on  SWI-Prolog, YAP, SICStus  Prolog, Scryer
-Prolog  and GNU-Prolog,  XSB and  Trealla Prolog.   To get  the actual
-list,  run  this command  to  get  the  system identifiers  and  their
-version.
+The  current version  runs on  SWI-Prolog, YAP,  SICStus Prolog,  Ciao
+lang, Scryer  Prolog and GNU-Prolog,  XSB and Trealla Prolog.   To get
+the actual  list, run this command  to get the system  identifiers and
+their version.
 
     swipl compare.pl -l
 
