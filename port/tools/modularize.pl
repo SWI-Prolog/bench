@@ -118,7 +118,7 @@ add_header(File, Options) :-
     format('% Do not edit.~n~n').
 
 modularize_file(File, Prefix, Options) :-
-    read_source_file(File, Terms),
+    read_source_file(File, Terms, Options),
     convlist(pred, Terms, Preds0),
     sort(Preds0, Preds),
     maplist(prefix(Prefix, Preds), Terms, TermsOut),
@@ -145,40 +145,39 @@ my_portray_clause((:- multifile(Terms))) =>
 my_portray_clause(Term) =>
     portray_clause(Term).
 
-read_source_file(File, Terms) :-
+read_source_file(File, Terms, Options) :-
     style_check(-singleton),
     setup_call_cleanup(
         (   push_operators([]),
             prolog_open_source(File, In)
         ),
-        read_source(In, Terms),
+        read_source(In, Terms, Options),
         (   prolog_close_source(In),
             pop_operators
         )).
 
-read_source(In, Terms) :-
+read_source(In, Terms, Options) :-
     prolog_read_source_term(In, Term, Expanded, []),
     (   Term == end_of_file
     ->  Terms = []
     ;   hide_term(Term)
-    ->  read_source(In, Terms)
+    ->  read_source(In, Terms, Options)
     ;   noexpand(Term)
     ->  Terms = [Term|Tail],
-        read_source(In, Tail)
+        read_source(In, Tail, Options)
     ;   (   is_list(Expanded)
-        ->  exclude(hide_expanded, Expanded, Expanded1),
+        ->  exclude(hide_term, Expanded, Expanded1),
             append(Expanded1, Tail, Terms)
         ;   Terms = [Expanded|Tail]
         ),
-        read_source(In, Tail)
+        read_source(In, Tail, Options)
     ).
 
-noexpand((:- _)).
+noexpand((:- _)) :- fail.
 
-hide_term((:-op(_,_,_))).
-
-hide_expanded((:- non_terminal(_))) => true.
-hide_expanded(_) => fail.
+hide_term((:-op(_,_,_))) => true.
+hide_term((:- non_terminal(_))) => true.
+hide_term(_) => fail.
 
 pred((Head :- _), PI) =>
     pi_head(PI, Head).

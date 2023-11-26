@@ -5,10 +5,10 @@
 % Auther: Jan Wielemaker
 % Copyright: Public domain.
 
-top :- clean, primes(10000), fail.
-top.
+:- dynamic(prime/1).
+:- dynamic(candidate/1).
 
-:- dynamic prime/1, candidate/1.
+top :- clean, primes(10000), !.
 
 clean :-
     retractall(prime(_)),

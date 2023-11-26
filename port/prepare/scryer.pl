@@ -50,6 +50,17 @@ main(Argv) :-
     argv_options(Argv, _Pos, Options),
     prepare(Options).
 
+term_expansion((:- use_module(library(clpfd))),
+               [ (:- use_module(library(clpz))),
+                 (:- op(700, xfx, in)),
+                 (:- op(700, xfx, my_ins)),
+                 (:- op(700, xfx, #=)),
+                 (:- op(700, xfx, #\=)),
+                 (:- op(450, xfx, ..))
+               ]).
+goal_expansion(number(X), (integer(X)->true;float(X))).
+goal_expansion(retractall(X), \+ (retract(X), fail)).
+
 prepare(Options) :-
     verbose(Options),
     option(dir(Dir), Options, 'port/programs/scryer'),
@@ -58,10 +69,15 @@ prepare(Options) :-
     ->  delete_directory_contents(Dir)
     ;   true
     ),
-    modularize_files(Files,
-                     [ dir(Dir),
-                       has_program(false)
-                     ]),
+    context_module(M),
+    setup_call_cleanup(
+        '$set_source_module'(Old, M),
+        modularize_files(Files,
+                         [ dir(Dir),
+                           has_program(false),
+                           module(scryer)
+                         ]),
+        '$set_source_module'(Old)),
     generate_include_all(Dir).
 
 opt_type(dir,     dir,     directory).
@@ -95,12 +111,13 @@ write_include(Out, OkFiles) :-
             run_top(Top) :-
                 call(Top).
 
-            has_program(P) :-
-                atom_concat(P, ':top', Pred),
-                current_predicate(Pred/0).
-
            |}),
+    maplist(mk_has_program(Out), OkFiles),
     maplist(include_file(Out), OkFiles).
+
+mk_has_program(Out, File) :-
+    file_prog(File, Prog),
+    portray_clause(Out, has_program(Prog)).
 
 include_file(Out, File) :-
     file_base_name(File, RelFile),
@@ -108,8 +125,7 @@ include_file(Out, File) :-
 
 test_file(File) :-
     debug(port, "Testing whether scryer-prolog can load ~q ...", [File]),
-    file_base_name(File, Base),
-    file_name_extension(Prog, _, Base),
+    file_prog(File, Prog),
     format(string(Goal), "'~w:top'", [Prog]),
     process_create(path('scryer-prolog'),
                    [ File, '-g', Goal, '-g', halt ],
@@ -125,3 +141,8 @@ test_file(File) :-
     ;   debug(port, "   --> FAILED: ~s", [ErrString]),
         fail
     ).
+
+file_prog(File, Prog) :-
+    file_base_name(File, Base),
+    file_name_extension(Prog, _, Base).
+

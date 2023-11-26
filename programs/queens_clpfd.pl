@@ -2,10 +2,10 @@
 % Author: Markus Triska
 % Copyright: this code is in the public domain
 
-top :- n_queens(16,_), !.
-
 :- use_module(library(clpfd)).
 :- op(700, xfx, my_ins).
+
+top :- n_queens(16,_), !.
 
 n_queens(N, Qs) :-
 	gen_list(N, Qs),
