@@ -35,7 +35,7 @@ program(zebra,		 576).
 
 % Later additions
 program(sieve,		 56).
-program(queens_clpfd,	 67).
+program(queens_clpfd,	 285).
 program(pingpong,	 25).
 program(fib,	         266).
 program(moded_path,      37773).

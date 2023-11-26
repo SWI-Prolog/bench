@@ -1,16 +1,17 @@
 % Copied from https://swish.swi-prolog.org/example/clpfd_queens.pl
 % Author: Markus Triska
+% Copyright: this code is in the public domain
 
-top :- n_queens(50,_), fail.
-top.
+top :- n_queens(16,_), !.
 
 :- use_module(library(clpfd)).
-:- op(700, xfx, ins).
+:- op(700, xfx, my_ins).
 
 n_queens(N, Qs) :-
-	length(Qs, N),
-	Qs ins 1..N,
-	safe_queens(Qs).
+	gen_list(N, Qs),
+	Qs my_ins 1..N,
+	safe_queens(Qs),
+	labeling([ff], Qs).
 
 safe_queens([]).
 safe_queens([Q|Qs]) :-
@@ -24,9 +25,16 @@ safe_queens([Q|Qs], Q0, D0) :-
 	D1 #= D0 + 1,
 	safe_queens(Qs, Q0, D1).
 
-:- if(\+current_predicate(ins/2)).
-ins([], _).
-ins([H|T], D) :-
+% do not use SWI-Prolog ins/2 as SICStus   does not have it. The library
+% is this simple loop with some additional type checks.
+
+my_ins([], _).
+my_ins([H|T], D) :-
 	H in D,
-	ins(T, D).
-:- endif.
+	my_ins(T, D).
+
+gen_list(0, []) :-
+	!.
+gen_list(N, [_|T]) :-
+	N1 is N-1,
+	gen_list(N1, T).
