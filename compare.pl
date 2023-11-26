@@ -62,6 +62,11 @@ bench(_Systems, Options) :-
     option(list(true), Options),
     !,
     list_systems.
+bench([], Options) :-
+    option(all(true), Options),
+    findall(S, known_system(S), Systems),
+    progress('Benchmarking ~w', [Systems], Options),
+    bench(Systems, Options).
 bench([], _Options) :-
     !,
     argv_usage(debug).
@@ -76,6 +81,8 @@ bench(Systems, Options) :-
 
 opt_type(speedup,          speedup,          number).
 opt_type(s,                speedup,          number).
+opt_type(cached,           cached,           boolean).
+opt_type(all,              all,              boolean).
 opt_type(verbose,          verbose,          boolean).
 opt_type(v,                verbose,          boolean).
 opt_type(ymax,             ymax,             number).
@@ -90,6 +97,8 @@ opt_type(prepare,          prepare,          boolean).
 opt_type(dump_plot_script, dump_plot_script, boolean).
 
 opt_help(speedup,          "Run benchmarks N times faster").
+opt_help(cached,           "Use cached CSV file if it exists").
+opt_help(all,              "Benchmark all known systems").
 opt_help(ymax,             "Truncate Y-scale").
 opt_help(verbose,          "Make stderr of process visible").
 opt_help(quiet,            "No progress messages").
@@ -112,6 +121,12 @@ known_system(_, System) :-
 
 system(Sys) :-
     clause(system(Sys, _Label, _Exe, _Speedup, _Argv, _Opts, _Input), _).
+
+known_system(Sys) :-
+    system(Sys),
+    catch(prolog_version(Sys, _),
+          error(existence_error(source_sink, _),_),
+          fail).
 
 system_property(Sys, exe(Exe)) =>
     clause(system(Sys, _Label, Exe, _Speedup, _Argv, _Opts, _Input), _).
@@ -255,14 +270,21 @@ system(ciao,
               |}.
 
 bench_system(Options, System, CSVOut) :-
+    option(cached(true), Options),
+    csv_file(System, CSVOut, Options),
+    exists_file(CSVOut),
+    !,
+    progress("Using cached results from ~w for \"~w\"",
+             [CSVOut, System], Options).
+bench_system(Options, System, CSVOut) :-
+    csv_file(System, CSVOut, Options),
     progress(bench_system_(Options, System, CSVOut),
              "Running benchmarks for \"~w\"", [System],
              Options).
 
 bench_system_(Options, System, CSVOut) :-
-    csv_file(System, CSVOut, Options),
     option(speedup(Speedup), Options, 1),
-    system(System, _Label, Exe, Speedup, Argv, CreaeteOpts, Script),
+    system(System, _Label, Exe, Speedup, Argv, CreateOpts, Script),
     (   Script == ""
     ->  Stdin = std
     ;   Stdin = pipe(In)
@@ -276,7 +298,7 @@ bench_system_(Options, System, CSVOut) :-
                      stdout(pipe(Out)),
                      stderr(Stderr),
                      process(PID)
-                   | CreaeteOpts
+                   | CreateOpts
                    ]),
     (   var(In)
     ->  true
@@ -326,8 +348,10 @@ report_failure(Status, System, ErrorString) :-
 csv_file(System, File, Options) :-
     option(data_dir(Dir), Options, 'data'),
     ensure_directory(Dir),
-    file_name_extension(System, csv, CSVFile),
+    option(speedup(Speedup), Options, 1),
+    format(atom(CSVFile), '~w-~w.csv', [System, Speedup]),
     directory_file_path(Dir, CSVFile, File).
+
 
 		 /*******************************
 		 *            VERSION		*
@@ -341,7 +365,7 @@ list_systems :-
 
 list(System) :-
     (   catch(system_property(System, version(Version)),
-              error(existence_error(source_sink, path(_)),_),
+              error(existence_error(source_sink, _),_),
               fail)
     ->  system_property(System, label(Label)),
         format('~w~t~15|~w~t~w~50|~n', [System, Label, Version])
@@ -439,7 +463,21 @@ csv_join(Out, Files) :-
 
 system(File, System) :-
     file_base_name(File, Plain),
-    file_name_extension(System, _, Plain).
+    file_name_extension(Base, _, Plain),
+    file_base_system(Base, System).
+
+%!  file_base_system(+Base, -System) is det.
+%
+%   Remove possible `-<speedup>` from Base to get the system.
+
+file_base_system(Base, System) :-
+    sub_atom(Base, B, _, A, -),
+    sub_atom(Base, _, A, 0, Suffix),
+    atom_number(Suffix, _),
+    !,
+    sub_atom(Base, 0, B, _, System).
+file_base_system(System, System).
+
 
 program(Data, P) :-
     member(System, Data),
