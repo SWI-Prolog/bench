@@ -173,7 +173,7 @@ read_source(In, Terms, Options) :-
         read_source(In, Tail, Options)
     ).
 
-noexpand((:- _)) :- fail.
+noexpand((:- table(_))).
 
 hide_term((:-op(_,_,_))) => true.
 hide_term((:- non_terminal(_))) => true.

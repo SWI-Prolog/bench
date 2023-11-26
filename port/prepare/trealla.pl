@@ -151,8 +151,8 @@ include_file(Out, File) :-
 
 test_file(File) :-
     debug(port, "Testing whether Trealla Prolog can load ~q ...", [File]),
-    file_base_name(File, Base),
-    file_name_extension(Prog, _, Base),
+    file_prog(File, Prog),
+    Prog \== sieve,                     % too slow
     format(string(Goal), "'~w:top',halt", [Prog]),
     process_create(path('tpl'),
                    [ '-g', Goal, '-l', File ],
@@ -168,3 +168,8 @@ test_file(File) :-
     ;   debug(port, "   --> FAILED: ~s", [ErrString]),
         fail
     ).
+
+file_prog(File, Prog) :-
+    file_base_name(File, Base),
+    file_name_extension(Prog, _, Base).
+

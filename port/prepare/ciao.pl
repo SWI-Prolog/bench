@@ -66,6 +66,9 @@ main(Argv) :-
     argv_options(Argv, _Pos, Options),
     prepare(Options).
 
+term_expansion(enable_tabling,
+               (:- use_package(tabling))).
+
 prepare(Options) :-
     verbose(Options),
     option(dir(Dir), Options, 'port/programs/ciao'),
@@ -74,9 +77,14 @@ prepare(Options) :-
     ->  delete_directory_contents(Dir)
     ;   true
     ),
-    modularize_files(Files,
-                     [ dir(Dir)
-                     ]),
+    context_module(M),
+    setup_call_cleanup(
+        '$set_source_module'(Old, M),
+        modularize_files(Files,
+                         [ dir(Dir),
+                           module(ciao)
+                         ]),
+        '$set_source_module'(Old)),
     generate_include_all(Dir).
 
 opt_type(dir,     dir,     directory).

@@ -126,6 +126,7 @@ include_file(Out, File) :-
 test_file(File) :-
     debug(port, "Testing whether scryer-prolog can load ~q ...", [File]),
     file_prog(File, Prog),
+    Prog \== sieve,                     % too slow
     format(string(Goal), "'~w:top'", [Prog]),
     process_create(path('scryer-prolog'),
                    [ File, '-g', Goal, '-g', halt ],

@@ -1,4 +1,7 @@
-:- table d/1,e/1.
+enable_tabling.                         % so we can expand
+
+:- table d/1.
+:- table e/1.
 
 top :- abolish_all_tables, d(_), fail.
 top.
