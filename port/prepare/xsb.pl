@@ -142,7 +142,7 @@ test_file(File) :-
 write_script(Stdin, File) :-
     file_program(File, Program),
     format(string(Load), "~q", [[File]]),
-    format(string(Goal), "'~w:top'", [Program]),
+    format(string(Goal), "'~w:top'->true;halt(1)", [Program]),
     Script =  {|string(Load, Goal)||
                 {Load}.
                 {Goal}.
