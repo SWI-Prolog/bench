@@ -74,6 +74,7 @@ ntimes(M, N, T, GC):-
 top(M, Goal) :-
     atom_concat(M, ':top', Goal).
 
+:- meta_predicate ntimes(goal,?).
 ntimes(_, N) :- N=:=0, !.
 ntimes(M, N) :- not_not_top(M), !, N1 is N-1, ntimes(M, N1).
 

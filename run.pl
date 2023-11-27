@@ -159,6 +159,8 @@ report_time(S, Program, Time, GC, csv) :-
 report_time(S, Program, Time, GC, _) :-
 	format(S, '~p~t~18| ~t~3f~25| ~t~3f~32|~n', [Program, Time, GC]).
 
+:- meta_predicate ntimes(0,?).
+
 ntimes(M, N, T, GC):-
 	top(M, Goal),
 	get_performance_stats(GC0, T0),
