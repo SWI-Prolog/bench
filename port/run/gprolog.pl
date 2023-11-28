@@ -1,45 +1,19 @@
 :- include('../programs/gprolog/include_all').
 :- include('../../programs').
 
-:- dynamic(result/3).
-
 run(F) :-
     run(user_output, F, csv).
 
 run(S, F, Format):-
-    \+ (retract(result(_,_,_)), fail),
     header(S, Format),
     (   use_program(P, N, F),
 	run_program(P, N, S, Format),
 	fail
     ;   true
-    ),
-    findall(t(Time, GC), retract(result(_,Time,GC)), List),
-    split(List, Times, GCs),	% avoid library preds for portability
-    suml(Times, Time),
-    suml(GCs, GC),
-    length(List, Count),
-    AvgT is Time/Count,
-    AvgGC is GC/Count,
-    footer(S, AvgT, AvgGC, Format).
-
-split([], [], []).
-split([t(T,G)|M], [T|Ta], [G|Tb]) :-
-    split(M, Ta, Tb).
-
-suml(List, N) :-
-    suml_(List, 0, N).
-
-suml_([], N, N).
-suml_([H|T], N0, N) :-
-    N1 is N0+H,
-    suml_(T, N1, N).
+    ).
 
 header(S, csv) :-
     write_term(S, 'program,time,gc\n', []).
-
-footer(S, AvgT, AvgGC, csv) :-
-    report_time(S, average, AvgT, AvgGC, csv).
 
 report_time(S, Program, Time, GC, csv) :-
     write_term(S, Program, []), write(','),
@@ -52,9 +26,7 @@ use_program(Program, N, F) :-
     N is max(1, round(N0*F)).
 
 run_program(Program, N, S, Format) :-
-%    write_term(S, Program, []), nl,
     ntimes(Program, N, Time, GC), !,
-    assertz(result(Program, Time, GC)),
     report_time(S, Program, Time, GC, Format).
 
 ntimes(M, N, T, GC):-

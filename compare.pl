@@ -458,8 +458,11 @@ csv_join(Out, Files) :-
     findall(P, distinct(P, program(Data, P)), Programs),
     maplist(make_row(Systems, Pairs), Programs, Rows),
     maplist(system_label, Systems, Labels),
+    add_average(Rows, AvgRow),
     Hdr =.. [row, program | Labels],
-    csv_write_file(Out, [Hdr|Rows], [separator(0'|)]).
+    append([[Hdr], Rows, [AvgRow]], AllRows),
+    csv_write_file(Out, AllRows, [separator(0'|)]).
+
 
 system(File, System) :-
     file_base_name(File, Plain),
@@ -497,6 +500,26 @@ system_time(Program, Pairs, System, Time) :-
     ->  Time is UTime+GC
     ;   Time = (-)
     ).
+
+add_average(Rows, AvgRow) :-
+    Rows = [R1|_],
+    functor(R1, _, Arity),
+    avg(2, Arity, Rows, Avg),
+    AvgRow =.. [row, 'AVERAGE' | Avg].
+
+avg(I, Arity, Rows, [Avg|T]) :-
+    I =< Arity,
+    !,
+    maplist(arg(I), Rows, Col0),
+    exclude(=(-), Col0, Col),
+    sum_list(Col, Sum),
+    length(Col, Len),
+    Avg is Sum/float(Len),
+    I2 is I+1,
+    avg(I2, Arity, Rows, T).
+avg(_, _, _, []).
+
+
 
 		 /*******************************
 		 *             PLOT		*
