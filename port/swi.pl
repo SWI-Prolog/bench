@@ -79,6 +79,7 @@ bench(Options) :-
 
 opt_type(csv,	      csv,	   boolean).
 opt_type(speedup,     speedup,	   number).
+opt_type(s,	      speedup,	   number).
 opt_type(calibrate,   calibrate,   boolean).
 opt_type(interleaved, interleaved, boolean).
 
