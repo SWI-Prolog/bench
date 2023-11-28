@@ -58,8 +58,6 @@ term_expansion((:- use_module(library(clpfd))),
                  (:- op(700, xfx, #\=)),
                  (:- op(450, xfx, ..))
                ]).
-goal_expansion(number(X), (integer(X)->true;float(X))).
-goal_expansion(retractall(X), \+ (retract(X), fail)).
 
 prepare(Options) :-
     verbose(Options),
@@ -101,17 +99,6 @@ generate_include_all(Dir) :-
         close(Out)).
 
 write_include(Out, OkFiles) :-
-    format(Out, '~s',
-           {|string||
-            :- module(programs,
-                      [ run_top/1,
-                        has_program/1
-                      ]).
-
-            run_top(Top) :-
-                call(Top).
-
-           |}),
     maplist(mk_has_program(Out), OkFiles),
     maplist(include_file(Out), OkFiles).
 
@@ -126,7 +113,6 @@ include_file(Out, File) :-
 test_file(File) :-
     debug(port, "Testing whether scryer-prolog can load ~q ...", [File]),
     file_prog(File, Prog),
-    Prog \== sieve,                     % too slow
     format(string(Goal), "'~w:top'", [Prog]),
     process_create(path('scryer-prolog'),
                    [ File, '-g', Goal, '-g', halt ],

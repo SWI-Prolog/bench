@@ -257,7 +257,7 @@ system(trealla,
     Factor is 1.0/Speedup,
     format(string(Goal), '~q', [(run(Factor),halt)]).
 system(ciao,
-       'Ciao Lang',
+       'Ciao Prolog',
        path(ciaosh),
        Speedup,
        [ '-q' ],

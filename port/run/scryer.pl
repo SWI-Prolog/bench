@@ -1,5 +1,5 @@
-:- use_module('../programs/scryer/include_all').
-:- use_module('../../programs').
+:- use_module('../programs/scryer/include_all.pl').
+:- use_module('../../programs.pl').
 :- use_module(library(lists)).
 
 :- dynamic(result/3).
@@ -63,31 +63,22 @@ ntimes(M, N, T, GC):-
     get_performance_stats(GC0, T0),
     ntimes(Goal, N),
     get_performance_stats(GC1, T1),
-    ntimes_dummy(N),
+    ntimes(dummy, N),
     get_performance_stats(GC2, T2),
     T  is (T1-T0) - (T2-T1),
     GC is (GC1-GC0) - (GC2-GC1).
 
-top(M, run_top(Goal)) :-
+top(M, Goal) :-
     atom_concat(M, ':top', Goal).
 
 ntimes(_, N) :- N=:=0, !.
 ntimes(M, N) :- not_not_top(M), !, N1 is N-1, ntimes(M, N1).
-
-ntimes_dummy(N) :- N=:=0, !.
-ntimes_dummy(N) :- not_not_dummy, !, N1 is N-1, ntimes_dummy(N1).
 
 not_not_top(M) :- not_top(M), !, fail.
 not_not_top(_).
 
 not_top(Goal) :- call(Goal), !, fail.
 not_top(_).
-
-not_not_dummy :- not_dummy, !, fail.
-not_not_dummy.
-
-not_dummy :- dummy, !, fail.
-not_dummy.
 
 dummy.
 
