@@ -1,5 +1,5 @@
-:- use_module('../programs/scryer/include_all').
-:- use_module('../../programs').
+:- use_module('../programs/scryer/include_all.pl').
+:- use_module('../../programs.pl').
 :- use_module(library(lists)).
 
 :- dynamic(result/3).
@@ -68,7 +68,7 @@ ntimes(M, N, T, GC):-
     T  is (T1-T0) - (T2-T1),
     GC is (GC1-GC0) - (GC2-GC1).
 
-top(M, run_top(Goal)) :-
+top(M, Goal) :-
     atom_concat(M, ':top', Goal).
 
 ntimes(_, N) :- N=:=0, !.
