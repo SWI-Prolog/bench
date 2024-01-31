@@ -105,9 +105,16 @@ use_program(P, N, F) :-
 	N is max(1, round(N0*F)).
 
 :- if(current_prolog_flag(static, true)).
-% include/1 poses problems for creating a single .qlf file.
-% should be fixed.
-term_expansion((:- include(File)), (:- consult(File))).
+% Allows compiling to a single SWI-Prolog .qlf file.  First,
+% create the include files using
+%
+%    swipl port/tools/modularize.pl --dir=port/programs/swi \
+%                  --include-all=include_all.pl programs/*.pl
+%
+% Next, compile using (--no-threads if you want to use this in e.g.
+% WASM)
+%
+%    swipl -Dstatic --no-threads -O qlf compile --include run.pl
 compile_programs.
 :- multifile(has_program/1).
 :- include('port/programs/swi/include_all').
