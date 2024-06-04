@@ -43,6 +43,7 @@
 :- endif.
 
 :- ensure_loaded(programs).
+:- initialization(compile_programs).
 
 run(F) :-
 	current_output(Out),
@@ -54,7 +55,6 @@ run(F, Format) :-
 
 run(S, F, Format):-
 	retractall(result(_,_,_)),
-	compile_programs,
 	header(S, Format),
 	(   use_program(P, N, F),
 	    run_program(P, N, S, Format),
