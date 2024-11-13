@@ -62,6 +62,12 @@ run(S, F, Format):-
 	;   true
 	),
 	findall(t(Time, GC), retract(result(_,Time,GC)), List),
+	summary(S, List, Format).
+
+summary(S, [], Format) :-
+	!,
+	footer(S, nan, nan, Format).
+summary(S, List, Format) :-
 	split(List, Times, GCs),	% avoid library preds for portability
 	suml(Times, Time),
 	suml(GCs, GC),
@@ -91,6 +97,9 @@ header(S, _) :-
 
 footer(_, _AvgT, _AvgGC, csv) :-	       % average is handled outside
 	!.
+footer(S, nan, nameAvgGC, _) :-
+	!,
+	format(S, 'No tests where executed~n', []).
 footer(S, AvgT, AvgGC, _) :-
 	format(S, '~t~w~18| ~t~3f~25| ~t~3f~32|~n', [average, AvgT, AvgGC]).
 
