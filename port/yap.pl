@@ -35,10 +35,10 @@
 :- dynamic(result/3).
 
 get_performance_stats(GC, T):-
-	statistics(garbage_collection, [_,_,TGC]),
-	statistics(cputime, [TT,_]),
-	GC is TGC / 1000,
-	T is TT / 1000.
+    statistics(garbage_collection, [_,_,TGC]),
+    statistics(cputime, [TT,_]),
+    GC is TGC / 1000,
+    T is TT / 1000.
 
 no_singletons :-
-	set_prolog_flag(single_var_warnings, off).
+    set_prolog_flag(single_var_warnings, off).
