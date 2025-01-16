@@ -35,7 +35,7 @@ To create a clustered histogram comparing multiple systems run e.g.
 
     swipl compare.pl --speedup=10 swi gprolog
 
-Any number of  systems may be specified.  Use `wipl  compare.pl -l` to
+Any number of systems may be  specified.  Use `swipl compare.pl -l` to
 see the available  systems and the _Porting_ section  below for adding
 systems.  The  results are  saved into  `bench.svg`.  Use  the command
 below for other options.
