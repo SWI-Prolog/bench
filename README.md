@@ -42,6 +42,26 @@ below for other options.
 
     swipl compare.pl --help
 
+### Adding systems ad-hoc
+
+You may want to add versions of your systems for analysis.  In that
+case, create a file `extra.pl`, adding e.g. the content below.  Next
+run as
+
+    swipl extra.pl compare.pl [option...] [system...]
+
+```
+:- multifile
+    compare:system/7.
+
+compare:system('swipl-here',
+       'SWI-Prolog (../build.pgo/src/swipl, -O)',
+       '../build.pgo/src/swipl',
+       Speedup,
+       ['-O', 'run.pl', '--csv', '--speedup', Speedup],
+       [],
+       "").
+```
 
 
 ## Porting

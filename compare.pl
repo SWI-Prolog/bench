@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        jan@swi-prolog.org
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2023, SWI-Prolog Solutions b.v.
+    Copyright (c)  2023-2025, SWI-Prolog Solutions b.v.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,15 @@
 :- use_module(library(solution_sequences)).
 :- use_module(library(dcg/basics)).
 :- use_module(library(error)).
+:- use_module(library(ansi_term)).
+:- use_module(library(filesex)).
+:- use_module(library(readutil)).
+:- use_module(library(statistics)).
 
 :- meta_predicate
     progress(0, +, +, +).
+:- multifile
+    system/7.
 
 /** <module> Compare multiple Prolog systems
 */
@@ -361,20 +367,28 @@ list_systems :-
     format('~`\u2015t~*|~n', [50]),
     ansi_format(bold, '~w~t~15|~w~n', ['Identifier', 'Description']),
     format('~`\u2015t~*|~n', [50]),
-    forall(system(System), list(System)).
+    (   system(System),
+        list(System),
+        fail
+    ;   true
+    ).
 
 list(System) :-
-    (   catch(system_property(System, version(Version)),
-              error(existence_error(source_sink, _),_),
-              fail)
-    ->  system_property(System, label(Label)),
-        format('~w~t~15|~w~t~w~50|~n', [System, Label, Version])
-    ;   system_property(System, exe(Exe)),
-        (   Exe = path(Prog)
-        ->  ansi_format(warning, '~w~t~15|No "~w" in PATH~n', [System, Prog])
-        ;   ansi_format(warning, '~w~t~15|No executable ~q~n', [System, Exe])
-        )
-    ).
+    catch(system_property(System, version(Version)),
+          process_error, Ball,
+          (version_failed(System, Ball), fail)),
+    system_property(System, label(Label)),
+    format('~w~t~15|~w~t~w~50|~n', [System, Label, Version]).
+
+version_failed(System, Ball) :-
+    message_to_string(Ball, Msg),
+    ansi_format(warning, '~w~t~15|~s~n', [System,Msg]).
+
+:- exception_type(process_error,
+                  error(existence_error(source_sink, _File),_)).
+:- exception_type(process_error,
+                  error(process_error(_Exe, exit(_Status)),_)).
+
 
 %!  prolog_version(+System, -Version) is semidet.
 %
