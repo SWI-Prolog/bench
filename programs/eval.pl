@@ -3,6 +3,8 @@
 
 % Evaluate large arithmetic expressions
 
+:- mode(add(+,-)).
+
 top :-
     t_(1000, 1).
 

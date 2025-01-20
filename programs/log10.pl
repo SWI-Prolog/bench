@@ -8,6 +8,8 @@
 %
 %   symbolic derivative of log(log(log(log(log(log(log(log(log(log(x))))))))))
 
+:- mode(d(+,?,-)).
+
 top:-log10.
 
 log10 :- d(log(log(log(log(log(log(log(log(log(log(x)))))))))),x,_).
