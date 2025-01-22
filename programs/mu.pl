@@ -7,6 +7,8 @@
 %
 %   prove "mu-math" theorem muiiu
 
+:- mode(theorem(+,+,-)).
+
 top:-mu.
 
 mu :- theorem([m,u,i,i,u], 5, _), !.
